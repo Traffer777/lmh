@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LMH — интернет-магазин (демо)
 
-## Getting Started
+Магазин российского стритвир-бренда **LMH (лмх)** — замена сайта лмх.com.
+Next.js 16 + TypeScript + Tailwind + Prisma (SQLite). Всё на русском.
+Оплата: **СБП + карты Мир + рассрочка** через ЮKassa. Доставка: СДЭК,
+Почта России, самовывоз, Беларусь/другие страны через поддержку.
 
-First, run the development server:
+## Запуск демо
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run db:push     # создать БД (SQLite)
+npm run seed        # наполнить демо-каталогом
+npm run dev         # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Демо открывается сразу. Оплата работает в **режиме mock** — реальные ключи не нужны.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Витрина
+- `/` — главная (hero, дропы, новинки, манифест)
+- `/catalog` — каталог с фильтром по дропам и категориям
+- `/product/[slug]` — карточка товара (галерея, размеры, в корзину)
+- `/cart`, `/checkout` — корзина и оформление (контакты, доставка, оплата)
+- `/about`, `/delivery`, `/contacts`, `/offer`, `/privacy`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Админка
+- `/admin` — вход: **admin / lmh-demo** (меняется в `.env`)
+- Сводка, товары (создание/редактирование/фото/размеры/остатки), заказы (статусы)
 
-## Learn More
+## Режимы оплаты (`PAYMENT_MODE` в `.env`)
+- `mock` — демо, оплата имитируется (по умолчанию)
+- `test` — тестовый магазин ЮKassa (нужны `YOOKASSA_SHOP_ID` / `YOOKASSA_SECRET_KEY`)
+- `live` — боевой магазин
 
-To learn more about Next.js, take a look at the following resources:
+## Что нужно для боевого запуска (фаза 2)
+1. Реальные **фото одежды** — загрузить через админку.
+2. Подтверждённые **контакты и реквизиты ИП/самозанятости** (футер, оферта, политика).
+3. **Ключи ЮKassa** (сначала тестовые) → `.env`, `PAYMENT_MODE=test` → `live`.
+4. **СДЭК ПВЗ-виджет** и расчёт доставки по API (сейчас — фиксированные тарифы).
+5. Перенос на **PostgreSQL** (поменять `provider` в `prisma/schema.prisma` + `DATABASE_URL`).
+6. Деплой на хостинг и привязка домена **лмх.com**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Структура
+- `app/` — страницы и API-роуты (`app/api/*`), админка (`app/admin/*`)
+- `components/` — UI-компоненты
+- `lib/` — БД, корзина, ЮKassa, авторизация, справочники
+- `prisma/` — схема и сид

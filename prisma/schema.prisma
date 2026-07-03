@@ -1,0 +1,109 @@
+// LMH store — схема БД. Прод: Postgres (Neon).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Drop {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
+  title       String
+  description String?
+  active      Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+
+model Product {
+  id          Int              @id @default(autoincrement())
+  slug        String           @unique
+  title       String
+  description String?
+  composition String? // состав / материал
+  price       Int // цена в рублях (целое)
+  category    String // худи, лонгслив, штаны, шорты, футболка, костюм, аксессуар
+  dropId      Int?
+  drop        Drop?            @relation(fields: [dropId], references: [id])
+  published   Boolean          @default(true)
+  limited     Boolean          @default(false)
+  sortOrder   Int              @default(0)
+  images      ProductImage[]
+  variants    ProductVariant[]
+  orderItems  OrderItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+}
+
+model ProductVariant {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String // S, M, L, XL, OS
+  stock     Int     @default(0)
+  sku       String?
+
+  @@unique([productId, size])
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  number          String      @unique // человекочитаемый номер заказа
+  customerName    String
+  phone           String
+  email           String?
+  deliveryMethod  String // cdek, pochta, boxberry, pickup, courier
+  deliveryAddress String? // город / адрес / ПВЗ
+  deliveryCost    Int         @default(0)
+  comment         String?
+  paymentMethod   String // sbp, card, installment
+  itemsTotal      Int
+  total           Int
+  status          String      @default("new") // new, paid, shipped, done, canceled
+  paymentId       String? // PaymentId Т-Кассы
+  customerId      Int?
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Customer {
+  id           Int      @id @default(autoincrement())
+  name         String
+  phone        String   @unique
+  email        String   @unique
+  passwordHash String
+  orders       Order[]
+  createdAt    DateTime @default(now())
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id])
+  title     String // снимок названия на момент заказа
+  size      String
+  price     Int // снимок цены
+  qty       Int
+}
+
+model Setting {
+  key   String @id
+  value String
+}
