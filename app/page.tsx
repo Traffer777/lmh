@@ -3,6 +3,8 @@ import HeroVideo from "@/components/HeroVideo";
 import ProductCard from "@/components/ProductCard";
 import { getPublishedProducts } from "@/lib/queries";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const products = await getPublishedProducts();
   const featured = products.slice(0, 8);
