@@ -5,6 +5,7 @@ import { ticketsPerUnit } from "@/lib/tickets";
 // Feed каталога для бота конкурса LMH × Глебас: SKU → категория → цена →
 // сколько билетов даст 1 шт. Используется в UI бота («купи худи — +2 билета»).
 
+export const dynamic = "force-dynamic"; // роут дергает БД — не пререндерим на билде
 export const revalidate = 300; // 5 мин
 
 export async function GET() {
