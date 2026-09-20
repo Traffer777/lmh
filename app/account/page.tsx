@@ -84,6 +84,19 @@ export default async function AccountPage() {
                 <span className="text-fg-dim">{deliveryLabel(o.deliveryMethod)}</span>
                 <span className="display text-lg text-accent">{formatPrice(o.total)}</span>
               </div>
+              {o.trackNumber && (
+                <div className="mono mt-3 border-t border-line pt-3 text-xs">
+                  <span className="text-fg-dim">Трек СДЭК: </span>
+                  <a
+                    href={`https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(o.trackNumber)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent hover:underline"
+                  >
+                    {o.trackNumber} ↗
+                  </a>
+                </div>
+              )}
             </div>
           ))}
         </div>

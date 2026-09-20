@@ -6,7 +6,10 @@ import { useCart } from "@/lib/cart";
 
 const NAV = [
   { href: "/catalog", label: "Каталог" },
+  { href: "/drops/lead-the-crowd", label: "Lead The Crowd" },
   { href: "/about", label: "Бренд" },
+  { href: "/stickers", label: "Стикеры" },
+  { href: "/media", label: "Медиа" },
   { href: "/delivery", label: "Доставка" },
   { href: "/contacts", label: "Контакты" },
   { href: "/account", label: "Кабинет" },

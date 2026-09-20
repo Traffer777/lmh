@@ -25,11 +25,99 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("sbp");
   const [comment, setComment] = useState("");
+  const [telegramId, setTelegramId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [instOpen, setInstOpen] = useState(false);
 
+  // Личный кабинет: предложение создать при оформлении (для гостей).
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [createAccount, setCreateAccount] = useState(false);
+  const [accountPassword, setAccountPassword] = useState("");
+
+  // СДЭК: выбор города → выбор ПВЗ → живой расчёт цены.
+  type City = { code: number; city: string; region: string };
+  type Pvz = { code: string; address: string; name: string };
+  const [cityQuery, setCityQuery] = useState("");
+  const [cityResults, setCityResults] = useState<City[]>([]);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [citySearching, setCitySearching] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [pvzList, setPvzList] = useState<Pvz[]>([]);
+  const [pvzLoading, setPvzLoading] = useState(false);
+  const [pvzFilter, setPvzFilter] = useState("");
+  const [selectedPvz, setSelectedPvz] = useState<Pvz | null>(null);
+  const [cdekQuote, setCdekQuote] = useState<{ cost: number; minDays?: number; maxDays?: number } | null>(null);
+  const [cdekLoading, setCdekLoading] = useState(false);
+  const [cdekError, setCdekError] = useState<string | null>(null);
+
+  const totalQty = useCart((s) => s.items.reduce((n, i) => n + i.qty, 0));
+  const freeShipping = itemsTotal >= FREE_SHIPPING_THRESHOLD;
+
   useEffect(() => setMounted(true), []);
+
+  // Поиск города по мере ввода (СДЭК ищет по полному названию).
+  useEffect(() => {
+    if (deliveryMethod !== "cdek") return;
+    if (selectedCity && cityQuery === selectedCity.city) return; // уже выбран
+    const q = cityQuery.trim();
+    if (q.length < 2) {
+      setCityResults([]);
+      return;
+    }
+    let cancelled = false;
+    setCitySearching(true);
+    const t = setTimeout(() => {
+      fetch(`/api/delivery/cdek/cities?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancelled) return;
+          setCityResults(d.ok ? d.cities : []);
+          setCityOpen(true);
+        })
+        .catch(() => !cancelled && setCityResults([]))
+        .finally(() => !cancelled && setCitySearching(false));
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [cityQuery, deliveryMethod, selectedCity]);
+
+  // При выборе города — грузим список ПВЗ и считаем цену.
+  useEffect(() => {
+    setPvzList([]);
+    setSelectedPvz(null);
+    setPvzFilter("");
+    setCdekQuote(null);
+    setCdekError(null);
+    if (deliveryMethod !== "cdek" || !selectedCity) return;
+    let cancelled = false;
+
+    setPvzLoading(true);
+    fetch(`/api/delivery/cdek/points?city=${selectedCity.code}`)
+      .then((r) => r.json())
+      .then((d) => !cancelled && setPvzList(d.ok ? d.points : []))
+      .catch(() => !cancelled && setPvzList([]))
+      .finally(() => !cancelled && setPvzLoading(false));
+
+    if (!freeShipping) {
+      setCdekLoading(true);
+      fetch(`/api/delivery/cdek?city=${selectedCity.code}&qty=${totalQty}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancelled) return;
+          if (d.ok) setCdekQuote({ cost: d.cost, minDays: d.minDays, maxDays: d.maxDays });
+          else setCdekError(d.error ?? "Не удалось рассчитать доставку.");
+        })
+        .catch(() => !cancelled && setCdekError("Не удалось рассчитать доставку."))
+        .finally(() => !cancelled && setCdekLoading(false));
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCity, deliveryMethod, freeShipping, totalQty]);
 
   // Если клиент вошёл в кабинет — подставляем его контакты.
   useEffect(() => {
@@ -37,6 +125,7 @@ export default function CheckoutPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d.ok && d.customer) {
+          setLoggedIn(true);
           setName((v) => v || d.customer.name);
           setPhone((v) => v || d.customer.phone);
           setEmail((v) => v || d.customer.email);
@@ -46,11 +135,16 @@ export default function CheckoutPage() {
   }, []);
 
   const deliveryDef = DELIVERY_METHODS.find((d) => d.value === deliveryMethod)!;
-  const deliveryCost = useMemo(
-    () => (itemsTotal >= FREE_SHIPPING_THRESHOLD ? 0 : deliveryDef.cost),
-    [itemsTotal, deliveryDef],
-  );
-  const total = itemsTotal + deliveryCost;
+  // Для СДЭК стоимость — из живого расчёта по городу (null, пока не посчитана).
+  const deliveryCost = useMemo<number | null>(() => {
+    if (freeShipping) return 0;
+    if (deliveryMethod === "cdek") return cdekQuote ? cdekQuote.cost : null;
+    return deliveryDef.cost;
+  }, [freeShipping, deliveryMethod, cdekQuote, deliveryDef]);
+  const total = itemsTotal + (deliveryCost ?? 0);
+  // Для СДЭК нужно выбрать город и ПВЗ; если не бесплатно — ещё и рассчитать цену.
+  const cdekNotReady =
+    deliveryMethod === "cdek" && (!selectedCity || !selectedPvz || (!freeShipping && cdekQuote === null));
 
   if (!mounted) return <div className="mx-auto max-w-7xl px-4 py-16 md:px-6" />;
 
@@ -70,15 +164,51 @@ export default function CheckoutPage() {
     setError(null);
     setLoading(true);
     try {
+      // Гость захотел кабинет — сначала регистрируем (сессия привяжет заказ к клиенту).
+      if (!loggedIn && createAccount) {
+        if (accountPassword.length < 6) {
+          setError("Пароль для кабинета — минимум 6 символов.");
+          setLoading(false);
+          return;
+        }
+        const reg = await fetch("/api/account/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, phone, email, password: accountPassword }),
+        });
+        const rd = await reg.json();
+        if (!rd.ok) {
+          setError(rd.error ?? "Не удалось создать кабинет.");
+          setLoading(false);
+          return;
+        }
+        setLoggedIn(true);
+      }
+
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i) => ({ productId: i.productId, size: i.size, qty: i.qty })),
+          items: items.map((i) => ({
+            productId: i.productId,
+            size: i.size,
+            qty: i.qty,
+            ...(i.custom && (i.custom.name || i.custom.number) ? { custom: i.custom } : {}),
+          })),
           customer: { name, phone, email },
-          delivery: { method: deliveryMethod, address },
+          delivery:
+            deliveryMethod === "cdek"
+              ? {
+                  method: "cdek",
+                  cityCode: selectedCity?.code,
+                  cityName: selectedCity?.city,
+                  pvzCode: selectedPvz?.code,
+                  pvzAddress: selectedPvz?.address,
+                }
+              : { method: deliveryMethod, address },
           paymentMethod,
           comment,
+          telegramId: telegramId.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -138,6 +268,45 @@ export default function CheckoutPage() {
                 />
               </div>
             </div>
+
+            {/* Предложение создать личный кабинет (для гостей) */}
+            {!loggedIn && (
+              <div className="mt-4 border border-line bg-bg-2 p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 accent-[var(--accent)]"
+                    checked={createAccount}
+                    onChange={(e) => setCreateAccount(e.target.checked)}
+                  />
+                  <span className="flex-1 text-sm">
+                    <span className="font-semibold">Создать личный кабинет</span>
+                    <span className="mono mt-1 block text-xs text-fg-dim">
+                      Быстрое оформление, история заказов и статусы. Понадобится e-mail и пароль.
+                    </span>
+                  </span>
+                </label>
+                {createAccount && (
+                  <div className="mt-3">
+                    <label className="lbl">Пароль для кабинета *</label>
+                    <input
+                      type="password"
+                      className="field"
+                      value={accountPassword}
+                      onChange={(e) => setAccountPassword(e.target.value)}
+                      placeholder="минимум 6 символов"
+                      autoComplete="new-password"
+                    />
+                    <p className="mono mt-2 text-xs text-fg-dim">
+                      Уже есть кабинет?{" "}
+                      <Link href="/account/login" className="text-accent hover:underline">
+                        Войти
+                      </Link>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* Доставка */}
@@ -145,7 +314,27 @@ export default function CheckoutPage() {
             <h2 className="display mb-4 text-2xl">2. Доставка</h2>
             <div className="space-y-3">
               {DELIVERY_METHODS.map((d) => {
-                const cost = itemsTotal >= FREE_SHIPPING_THRESHOLD ? 0 : d.cost;
+                const free = itemsTotal >= FREE_SHIPPING_THRESHOLD;
+                // Цена в правом столбце для конкретного способа.
+                let priceLabel: string;
+                if (isSupportDelivery(d.value)) priceLabel = "уточняется";
+                else if (free) priceLabel = "бесплатно";
+                else if (d.value === "cdek")
+                  priceLabel =
+                    deliveryMethod === "cdek"
+                      ? cdekLoading
+                        ? "считаем…"
+                        : cdekQuote
+                          ? formatPrice(cdekQuote.cost)
+                          : "по городу"
+                      : "по городу";
+                else priceLabel = formatPrice(d.cost);
+
+                const eta =
+                  d.value === "cdek" && deliveryMethod === "cdek" && cdekQuote?.minDays
+                    ? `${cdekQuote.minDays}–${cdekQuote.maxDays ?? cdekQuote.minDays} дн.`
+                    : d.eta;
+
                 return (
                   <label key={d.value} className={radioRow(deliveryMethod === d.value)}>
                     <input
@@ -158,15 +347,9 @@ export default function CheckoutPage() {
                     <span className="flex-1">
                       <span className="flex justify-between">
                         <span className="font-semibold">{d.label}</span>
-                        <span className="mono text-sm">
-                          {isSupportDelivery(d.value)
-                            ? "уточняется"
-                            : cost === 0
-                              ? "бесплатно"
-                              : formatPrice(cost)}
-                        </span>
+                        <span className="mono text-sm">{priceLabel}</span>
                       </span>
-                      <span className="mono text-xs text-fg-dim">Срок: {d.eta}</span>
+                      <span className="mono text-xs text-fg-dim">Срок: {eta}</span>
                     </span>
                   </label>
                 );
@@ -190,12 +373,127 @@ export default function CheckoutPage() {
                   placeholder="Страна, город (необязательно)"
                 />
               </div>
+            ) : deliveryMethod === "cdek" ? (
+              <div className="mt-4 space-y-4">
+                {/* Город */}
+                <div className="relative">
+                  <label className="lbl">Город *</label>
+                  <input
+                    className="field"
+                    value={cityQuery}
+                    onChange={(e) => {
+                      setCityQuery(e.target.value);
+                      setSelectedCity(null);
+                    }}
+                    onFocus={() => cityResults.length && setCityOpen(true)}
+                    placeholder="Введите город полностью, напр. Новосибирск"
+                    autoComplete="off"
+                  />
+                  {citySearching && (
+                    <p className="mono mt-1 text-xs text-fg-dim">Ищем город…</p>
+                  )}
+                  {cityOpen && cityResults.length > 0 && !selectedCity && (
+                    <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto border border-line bg-bg-2 shadow-lg">
+                      {cityResults.map((c) => (
+                        <li key={c.code}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCity(c);
+                              setCityQuery(c.city);
+                              setCityOpen(false);
+                            }}
+                            className="flex w-full flex-col items-start px-4 py-2 text-left hover:bg-bg"
+                          >
+                            <span className="text-sm">{c.city}</span>
+                            {c.region && <span className="mono text-xs text-fg-dim">{c.region}</span>}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {cityQuery.trim().length >= 2 && !citySearching && !selectedCity && cityResults.length === 0 && (
+                    <p className="mono mt-1 text-xs text-fg-dim">
+                      Город не найден — введите название полностью.
+                    </p>
+                  )}
+                </div>
+
+                {/* Пункт выдачи */}
+                {selectedCity && (
+                  <div>
+                    <label className="lbl">Пункт выдачи СДЭК *</label>
+                    {pvzLoading ? (
+                      <p className="mono text-xs text-fg-dim">Загружаем пункты выдачи…</p>
+                    ) : pvzList.length === 0 ? (
+                      <p className="mono text-xs text-fg-dim">
+                        В этом городе не нашлось пунктов выдачи СДЭК. Выберите другой город.
+                      </p>
+                    ) : (
+                      <>
+                        {pvzList.length > 8 && (
+                          <input
+                            className="field mb-2"
+                            value={pvzFilter}
+                            onChange={(e) => setPvzFilter(e.target.value)}
+                            placeholder="Поиск по адресу пункта выдачи"
+                          />
+                        )}
+                        <div className="max-h-56 space-y-2 overflow-auto border border-line bg-bg-2 p-2">
+                          {pvzList
+                            .filter((p) =>
+                              p.address.toLowerCase().includes(pvzFilter.trim().toLowerCase()),
+                            )
+                            .slice(0, 60)
+                            .map((p) => (
+                              <label
+                                key={p.code}
+                                className={`flex cursor-pointer items-start gap-2 border p-2 text-sm transition-colors ${
+                                  selectedPvz?.code === p.code
+                                    ? "border-accent bg-bg"
+                                    : "border-line hover:border-fg-dim"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="pvz"
+                                  className="mt-1 accent-[var(--accent)]"
+                                  checked={selectedPvz?.code === p.code}
+                                  onChange={() => setSelectedPvz(p)}
+                                />
+                                <span>{p.address}</span>
+                              </label>
+                            ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Стоимость */}
+                {freeShipping ? (
+                  <p className="mono text-xs text-accent-2">Ваш заказ — бесплатная доставка.</p>
+                ) : cdekLoading ? (
+                  <p className="mono text-xs text-fg-dim">Рассчитываем стоимость СДЭК…</p>
+                ) : cdekQuote ? (
+                  <p className="mono text-xs text-fg-dim">
+                    Доставка до ПВЗ: {formatPrice(cdekQuote.cost)}
+                    {cdekQuote.minDays
+                      ? ` · ${cdekQuote.minDays}–${cdekQuote.maxDays ?? cdekQuote.minDays} дн.`
+                      : ""}
+                  </p>
+                ) : cdekError ? (
+                  <p className="mono text-xs text-accent">{cdekError}</p>
+                ) : (
+                  <p className="mono text-xs text-fg-dim">
+                    Выберите город — рассчитаем стоимость доставки из Москвы.
+                  </p>
+                )}
+              </div>
             ) : (
               <div className="mt-4">
                 <label className="lbl">
-                  {deliveryMethod === "intl"
-                    ? "Страна, город, адрес *"
-                    : "Город, адрес или пункт выдачи *"}
+                  {deliveryMethod === "intl" ? "Страна, город, адрес *" : "Город, адрес *"}
                 </label>
                 <input
                   className="field"
@@ -204,7 +502,7 @@ export default function CheckoutPage() {
                   placeholder={
                     deliveryMethod === "intl"
                       ? "Беларусь, Минск, ул. ..., индекс"
-                      : "Москва, СДЭК, ул. ..., индекс"
+                      : "Город, ул. ..., индекс"
                   }
                   required
                 />
@@ -286,6 +584,28 @@ export default function CheckoutPage() {
                 placeholder="Мы растём благодаря вам. Здесь вы можете оставить пожелания по развитию бренда или помощи в его участии."
               />
             </div>
+            <div className="mt-4 border border-line bg-bg-2/60 p-4">
+              <label className="lbl">
+                🏁 Telegram для конкурса LMH × ГЛЕБАС
+                <span className="ml-2 text-xs text-fg-2">(необязательно)</span>
+              </label>
+              <input
+                className="field"
+                type="text"
+                value={telegramId}
+                onChange={(e) => setTelegramId(e.target.value)}
+                placeholder="@nickname или числовой ID"
+              />
+              <p className="mt-2 text-xs text-fg-2">
+                Укажи свой Telegram — начислим билеты на розыгрыш{" "}
+                <span className="text-fg">стразовой Приоры</span>. Как узнать ID: напиши{" "}
+                <code>/id</code> в{" "}
+                <a href="https://t.me/lmhworldwide_bot" target="_blank" rel="noopener" className="underline">
+                  @lmhworldwide_bot
+                </a>
+                .
+              </p>
+            </div>
           </section>
         </div>
 
@@ -295,14 +615,21 @@ export default function CheckoutPage() {
             <h2 className="display text-2xl">Ваш заказ</h2>
             <ul className="mt-4 space-y-3">
               {items.map((it) => (
-                <li key={`${it.productId}-${it.size}`} className="flex justify-between gap-2 text-sm">
+                <li
+                  key={`${it.productId}-${it.size}-${it.custom?.name ?? ""}-${it.custom?.number ?? ""}`}
+                  className="flex justify-between gap-2 text-sm"
+                >
                   <span className="text-fg-dim">
                     {it.title} · {it.size} × {it.qty}
+                    {it.custom && (it.custom.name || it.custom.number)
+                      ? ` · нанесение: ${it.custom.name ?? ""}${it.custom.number ? ` №${it.custom.number}` : ""}`
+                      : ""}
                   </span>
                   <span className="mono whitespace-nowrap">{formatPrice(it.price * it.qty)}</span>
                 </li>
               ))}
             </ul>
+
             <div className="mono mt-5 flex justify-between border-t border-line pt-4 text-sm text-fg-dim">
               <span>Товары</span>
               <span>{formatPrice(itemsTotal)}</span>
@@ -314,7 +641,9 @@ export default function CheckoutPage() {
                   ? "уточняется"
                   : deliveryCost === 0
                     ? "бесплатно"
-                    : formatPrice(deliveryCost)}
+                    : deliveryCost === null
+                      ? "по городу"
+                      : formatPrice(deliveryCost)}
               </span>
             </div>
             <div className="mt-4 flex justify-between border-t border-line pt-4">
@@ -322,7 +651,11 @@ export default function CheckoutPage() {
                 {isSupportDelivery(deliveryMethod) ? "Сумма товаров" : "К оплате"}
               </span>
               <span className="display text-xl text-accent">
-                {formatPrice(isSupportDelivery(deliveryMethod) ? itemsTotal : total)}
+                {isSupportDelivery(deliveryMethod)
+                  ? formatPrice(itemsTotal)
+                  : cdekNotReady
+                    ? "—"
+                    : formatPrice(total)}
               </span>
             </div>
             {isSupportDelivery(deliveryMethod) && (
@@ -337,12 +670,22 @@ export default function CheckoutPage() {
               </p>
             )}
 
-            <button type="submit" disabled={loading} className="btn btn-accent mt-6 w-full">
+            <button
+              type="submit"
+              disabled={loading || cdekNotReady}
+              className="btn btn-accent mt-6 w-full disabled:cursor-not-allowed disabled:opacity-50"
+            >
               {loading
                 ? "Создаём заказ…"
-                : isSupportDelivery(deliveryMethod)
-                  ? "Оформить через поддержку"
-                  : "Перейти к оплате"}
+                : cdekNotReady
+                  ? cdekLoading
+                    ? "Считаем доставку…"
+                    : !selectedCity
+                      ? "Выберите город СДЭК"
+                      : "Выберите пункт выдачи"
+                  : isSupportDelivery(deliveryMethod)
+                    ? "Оформить через поддержку"
+                    : "Перейти к оплате"}
             </button>
             <p className="mono mt-3 text-center text-[10px] uppercase tracking-widest text-fg-dim">
               Нажимая, вы соглашаетесь с офертой

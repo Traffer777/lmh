@@ -1,3 +1,4 @@
+import PeelSticker from "@/components/PeelSticker";
 import { DELIVERY_METHODS, PAYMENT_METHODS, isSupportDelivery } from "@/lib/constants";
 import { COMPANY } from "@/lib/company";
 
@@ -5,7 +6,16 @@ export const metadata = { title: "Доставка и оплата — LMH" };
 
 export default function DeliveryPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 md:px-6">
+    <div className="relative mx-auto max-w-3xl px-4 py-16 md:px-6">
+      {/* пасхалка — выглядывает из-за правого края */}
+      <PeelSticker
+        src="/stickers/demo-lmh.png"
+        alt="Стикеры LMH"
+        href="/stickers"
+        size={56}
+        rotate={-11}
+        className="absolute right-0 top-44 z-10 hidden lg:inline-block"
+      />
       <p className="mono text-xs uppercase tracking-[0.3em] text-accent">Доставка и оплата</p>
       <h1 className="display mt-3 text-5xl md:text-6xl">Как получить заказ</h1>
 

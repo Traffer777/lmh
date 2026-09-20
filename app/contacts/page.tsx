@@ -1,4 +1,5 @@
 import Socials from "@/components/Socials";
+import PeelSticker from "@/components/PeelSticker";
 import { COMPANY } from "@/lib/company";
 
 export const metadata = { title: "Контакты — LMH" };
@@ -14,7 +15,16 @@ const CONTACTS = [
 
 export default function ContactsPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 md:px-6">
+    <div className="relative mx-auto max-w-3xl px-4 py-16 md:px-6">
+      {/* пасхалка — нижний левый угол, выглядывает из-за края */}
+      <PeelSticker
+        src="/stickers/demo-lmh.png"
+        alt="Стикеры LMH"
+        href="/stickers"
+        size={56}
+        rotate={6}
+        className="absolute -left-3 bottom-8 z-10 hidden lg:inline-block"
+      />
       <p className="mono text-xs uppercase tracking-[0.3em] text-accent">Контакты</p>
       <h1 className="display mt-3 text-5xl md:text-6xl">Связаться с LMH</h1>
       <p className="mt-4 text-fg-dim">

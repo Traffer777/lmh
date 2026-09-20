@@ -271,3 +271,155 @@ label.lbl {
 a {
   color: inherit;
 }
+
+/* Крутящийся каталог дропа CTRL+V */
+@keyframes ctrlv-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ctrlv-marquee {
+  display: flex;
+  width: max-content;
+  animation: ctrlv-scroll 45s linear infinite;
+}
+.ctrlv-rail:hover .ctrlv-marquee { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ctrlv-marquee { animation: none; }
+  .ctrlv-rail { overflow-x: auto; }
+}
+
+/* ===== Наклейки LMH — глянцевый стикер с загнутым уголком =====
+   Наклон задаётся инлайново на .lmh-sticker-rot (статичный transform);
+   всё остальное — на процентах и статичных transform. Никаких var()
+   внутри transform: Lightning CSS (Tailwind v4) дропает такие правила.
+   Уголок и обрез лица — в %, поэтому масштабируются под любой size. */
+.lmh-sticker-link {
+  border-radius: 14px;
+  touch-action: manipulation;
+}
+.lmh-sticker-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+.lmh-sticker-rot {
+  display: inline-block;
+}
+.lmh-sticker {
+  position: relative;
+  display: inline-block;
+  filter: drop-shadow(3px 5px 5px rgba(0, 0, 0, 0.5));
+  transition: transform 0.9s cubic-bezier(0.22, 0.61, 0.36, 1),
+    filter 1.1s ease;
+  will-change: transform;
+}
+/* «лицо» наклейки: скруглённый глянцевый прямоугольник; уголок вырезается clip-path */
+.lmh-sticker__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  /* покой: уголок чуть отогнут (вырезан ~13%) */
+  clip-path: polygon(0 0, 87% 0, 100% 13%, 100% 100%, 0 100%);
+  /* медленный, плавный отгиб края */
+  transition: clip-path 1.7s cubic-bezier(0.33, 0, 0.2, 1);
+}
+.lmh-sticker--dark .lmh-sticker__face {
+  background: #0a0a0a;
+}
+.lmh-sticker__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+/* глянцевый блик-засвет по диагонали (глянец винила) */
+.lmh-sticker__gloss {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.6) 43%,
+    rgba(255, 255, 255, 0.1) 49%,
+    rgba(0, 0, 0, 0.06) 55%,
+    transparent 70%
+  );
+  opacity: 0.75;
+  transform: translateX(-18%);
+  transition: transform 1.4s ease, opacity 1s ease;
+  mix-blend-mode: soft-light;
+}
+/* загнутый уголок (изнанка + блик по сгибу), в % → масштаб под size */
+.lmh-sticker__curl {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26%;
+  height: 26%;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  background: linear-gradient(
+    315deg,
+    #7a7a7a 0%,
+    #f7f7f7 50%,
+    #cccccc 78%,
+    #9a9a9a 100%
+  );
+  filter: drop-shadow(-4px 4px 4px rgba(0, 0, 0, 0.5));
+  transform: scale(0.5);
+  transform-origin: 100% 0;
+  /* медленный, плавный отгиб уголка */
+  transition: transform 1.7s cubic-bezier(0.33, 0, 0.2, 1);
+}
+/* hover / фокус: уголок отгибается сильнее, стикер приподнимается, блик проходит */
+.lmh-sticker-rot:hover .lmh-sticker,
+.lmh-sticker-link:focus-visible .lmh-sticker {
+  transform: scale(1.05) translateY(-2px);
+  filter: drop-shadow(9px 15px 13px rgba(0, 0, 0, 0.58));
+}
+.lmh-sticker-rot:hover .lmh-sticker__face,
+.lmh-sticker-link:focus-visible .lmh-sticker__face {
+  clip-path: polygon(0 0, 72% 0, 100% 28%, 100% 100%, 0 100%);
+}
+.lmh-sticker-rot:hover .lmh-sticker__curl,
+.lmh-sticker-link:focus-visible .lmh-sticker__curl {
+  transform: scale(1.08);
+}
+/* статично отклеенный уголок (peeled) — как будто стикер уже отклеивается */
+.lmh-sticker--peeled .lmh-sticker__face {
+  clip-path: polygon(0 0, 72% 0, 100% 28%, 100% 100%, 0 100%);
+}
+.lmh-sticker--peeled .lmh-sticker__curl {
+  transform: scale(1.08);
+}
+
+.lmh-sticker-rot:hover .lmh-sticker__gloss,
+.lmh-sticker-link:focus-visible .lmh-sticker__gloss {
+  transform: translateX(20%);
+  opacity: 0.95;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lmh-sticker,
+  .lmh-sticker__face,
+  .lmh-sticker__curl,
+  .lmh-sticker__gloss {
+    transition: none;
+  }
+  .lmh-sticker-rot:hover .lmh-sticker,
+  .lmh-sticker-link:focus-visible .lmh-sticker {
+    transform: scale(1.03);
+  }
+}
+
+/* Субтитры видео дропа CTRL+V — крупно, по-бренду, с тенью для читаемости */
+.ctrlv-video::cue {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 700;
+  font-size: 1.05em;
+  line-height: 1.35;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}

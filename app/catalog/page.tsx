@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import PeelSticker from "@/components/PeelSticker";
 import { getPublishedProducts, getDrops } from "@/lib/queries";
 import { CATEGORIES, categoryLabel } from "@/lib/constants";
 
@@ -26,7 +27,16 @@ export default async function CatalogPage({
     }`;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+    <div className="relative mx-auto max-w-7xl px-4 py-12 md:px-6">
+      {/* пасхалка — верхний правый угол */}
+      <PeelSticker
+        src="/stickers/demo-lmh.png"
+        alt="Стикеры LMH"
+        href="/stickers"
+        size={58}
+        rotate={9}
+        className="absolute right-3 top-4 z-10 hidden sm:inline-block"
+      />
       <h1 className="display text-5xl md:text-6xl">Каталог</h1>
       {activeDrop?.description && (
         <p className="mt-3 max-w-2xl text-fg-dim">{activeDrop.description}</p>

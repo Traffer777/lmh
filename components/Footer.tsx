@@ -20,6 +20,8 @@ export default function Footer() {
           <ul className="space-y-2 text-sm">
             <li><Link href="/catalog" className="hover:text-accent">Каталог</Link></li>
             <li><Link href="/about" className="hover:text-accent">О бренде</Link></li>
+            <li><Link href="/stickers" className="hover:text-accent">Стикеры</Link></li>
+            <li><Link href="/media" className="hover:text-accent">Медиа</Link></li>
             <li><Link href="/delivery" className="hover:text-accent">Доставка и оплата</Link></li>
             <li><Link href="/contacts" className="hover:text-accent">Контакты</Link></li>
           </ul>

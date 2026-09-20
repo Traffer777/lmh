@@ -1,8 +1,10 @@
+import PeelSticker from "@/components/PeelSticker";
+
 export const metadata = { title: "О бренде — LMH" };
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 md:px-6">
+    <div className="relative mx-auto max-w-3xl px-4 py-16 md:px-6">
       <p className="mono text-xs uppercase tracking-[0.3em] text-accent">О бренде</p>
       <h1 className="display mt-3 text-5xl md:text-6xl">LMH — форма улицы</h1>
 
@@ -35,6 +37,16 @@ export default function AboutPage() {
           </div>
         ))}
       </div>
+
+      {/* пасхалка — нижний правый угол */}
+      <PeelSticker
+        src="/stickers/demo-lmh.png"
+        alt="Стикеры LMH"
+        href="/stickers"
+        size={56}
+        rotate={7}
+        className="absolute -bottom-4 right-2 z-10 hidden sm:inline-block"
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
+import { TICKET_BONUS_THRESHOLD, TICKET_MULTIPLIER_THRESHOLD } from "@/lib/tickets";
 
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
@@ -37,7 +38,10 @@ export default function CartPage() {
         <div className="lg:col-span-2">
           <ul className="divide-y divide-line border-y border-line">
             {items.map((it) => (
-              <li key={`${it.productId}-${it.size}`} className="flex gap-4 py-5">
+              <li
+                key={`${it.productId}-${it.size}-${it.custom?.name ?? ""}-${it.custom?.number ?? ""}`}
+                className="flex gap-4 py-5"
+              >
                 <Link
                   href={`/product/${it.slug}`}
                   className="relative h-28 w-24 shrink-0 overflow-hidden border border-line bg-white"
@@ -59,11 +63,17 @@ export default function CartPage() {
                   <p className="mono mt-1 text-xs uppercase tracking-widest text-fg-dim">
                     Размер: {it.size}
                   </p>
+                  {it.custom && (it.custom.name || it.custom.number) && (
+                    <p className="mono mt-1 text-xs uppercase tracking-widest text-accent-2">
+                      Нанесение: {it.custom.name ?? ""}
+                      {it.custom.number ? ` · №${it.custom.number}` : ""}
+                    </p>
+                  )}
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center border border-line">
                       <button
                         className="mono px-3 py-1 hover:text-accent"
-                        onClick={() => setQty(it.productId, it.size, it.qty - 1)}
+                        onClick={() => setQty(it.productId, it.size, it.qty - 1, it.custom)}
                         aria-label="Меньше"
                       >
                         −
@@ -71,7 +81,7 @@ export default function CartPage() {
                       <span className="mono min-w-8 text-center">{it.qty}</span>
                       <button
                         className="mono px-3 py-1 hover:text-accent disabled:opacity-30"
-                        onClick={() => setQty(it.productId, it.size, it.qty + 1)}
+                        onClick={() => setQty(it.productId, it.size, it.qty + 1, it.custom)}
                         disabled={it.qty >= it.maxStock}
                         aria-label="Больше"
                       >
@@ -80,7 +90,7 @@ export default function CartPage() {
                     </div>
                     <button
                       className="mono text-xs uppercase tracking-widest text-fg-dim hover:text-accent"
-                      onClick={() => remove(it.productId, it.size)}
+                      onClick={() => remove(it.productId, it.size, it.custom)}
                     >
                       Удалить
                     </button>
@@ -119,6 +129,30 @@ export default function CartPage() {
               <span className="display text-xl">К оплате</span>
               <span className="display text-xl text-accent">{formatPrice(total)}</span>
             </div>
+
+            {(() => {
+              if (total >= TICKET_MULTIPLIER_THRESHOLD) {
+                return (
+                  <p className="mono mt-4 border border-accent/40 bg-accent/10 p-2 text-xs text-accent">
+                    🏁 ×2 БИЛЕТОВ на розыгрыш Приоры — активировано
+                  </p>
+                );
+              }
+              if (total >= TICKET_BONUS_THRESHOLD) {
+                const left = TICKET_MULTIPLIER_THRESHOLD - total;
+                return (
+                  <p className="mono mt-4 border border-line bg-bg-3 p-2 text-xs text-fg-dim">
+                    🏁 +3 бонусных билета получены. Добавь ещё {formatPrice(left)} → ×2 всей суммы билетов
+                  </p>
+                );
+              }
+              const left = TICKET_BONUS_THRESHOLD - total;
+              return (
+                <p className="mono mt-4 border border-line bg-bg-3 p-2 text-xs text-fg-dim">
+                  🏁 Добавь ещё {formatPrice(left)} → +3 бонусных билета на розыгрыш Приоры
+                </p>
+              );
+            })()}
 
             <Link href="/checkout" className="btn btn-accent mt-6 w-full">
               Оформить заказ

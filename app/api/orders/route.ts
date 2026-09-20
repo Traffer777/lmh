@@ -5,14 +5,31 @@ import { initPayment } from "@/lib/yookassa";
 import { initInstallmentPayment } from "@/lib/tbank-installment";
 import { getCurrentCustomerId } from "@/lib/customer-auth";
 import { DELIVERY_METHODS, PAYMENT_METHODS, FREE_SHIPPING_THRESHOLD, isSupportDelivery } from "@/lib/constants";
+import { notifyNewOrder } from "@/lib/telegram";
+import { calcToCity } from "@/lib/cdek";
+import { stickerPackPrice } from "@/lib/stickers";
 
-type IncomingItem = { productId: number; size: string; qty: number };
+type IncomingItem = {
+  productId: number;
+  size: string;
+  qty: number;
+  custom?: { name?: string; number?: string };
+};
 type Body = {
   items: IncomingItem[];
   customer: { name: string; phone: string; email?: string };
-  delivery: { method: string; address?: string };
+  delivery: {
+    method: string;
+    address?: string;
+    // Для СДЭК: выбранный город и пункт выдачи.
+    cityCode?: number;
+    cityName?: string;
+    pvzCode?: string;
+    pvzAddress?: string;
+  };
   paymentMethod: string;
   comment?: string;
+  telegramId?: string;
 };
 
 function orderNumber(): string {
@@ -27,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Некорректный запрос." }, { status: 400 });
   }
 
-  const { items, customer, delivery, paymentMethod, comment } = body;
+  const { items, customer, delivery, paymentMethod, comment, telegramId } = body;
 
   // Валидация формы
   if (!items?.length) return NextResponse.json({ ok: false, error: "Корзина пуста." }, { status: 400 });
@@ -36,8 +53,13 @@ export async function POST(request: NextRequest) {
 
   const deliveryDef = DELIVERY_METHODS.find((d) => d.value === delivery?.method);
   if (!deliveryDef) return NextResponse.json({ ok: false, error: "Выберите способ доставки." }, { status: 400 });
-  if (delivery.method !== "pickup" && delivery.method !== "telegram" && !delivery.address?.trim())
+  // Для СДЭК адрес не вводят вручную — нужен выбранный город + ПВЗ (см. ниже).
+  if (delivery.method !== "pickup" && delivery.method !== "telegram" && delivery.method !== "cdek" && !delivery.address?.trim())
     return NextResponse.json({ ok: false, error: "Укажите адрес / пункт выдачи (для Беларуси и других стран — страну и город)." }, { status: 400 });
+
+  const cityCode = Number(delivery.cityCode);
+  if (delivery.method === "cdek" && (!Number.isFinite(cityCode) || cityCode <= 0 || !delivery.pvzCode?.trim()))
+    return NextResponse.json({ ok: false, error: "Для доставки СДЭК выберите город и пункт выдачи." }, { status: 400 });
 
   if (!PAYMENT_METHODS.some((p) => p.value === paymentMethod))
     return NextResponse.json({ ok: false, error: "Выберите способ оплаты." }, { status: 400 });
@@ -63,11 +85,49 @@ export async function POST(request: NextRequest) {
         { ok: false, error: `«${product.title}» (${it.size}): в наличии ${variant.stock} шт.` },
         { status: 409 },
       );
-    itemsTotal += product.price * qty;
-    orderItems.push({ productId: product.id, title: product.title, size: it.size, price: product.price, qty });
+    // Персональное нанесение (имя/номер на спине) — фиксируем в снимке названия,
+    // чтобы попало в заказ и в уведомление владельцу.
+    const cn = it.custom?.name?.trim().slice(0, 14);
+    const cnum = it.custom?.number?.trim().replace(/\D/g, "").slice(0, 3);
+    const customSuffix =
+      cn || cnum ? ` [нанесение: ${cn ?? ""}${cnum ? ` №${cnum}` : ""}]` : "";
+    // Для стикеров цена зависит от размера пачки (50/100/500/1000 шт); иначе — цена товара.
+    const unitPrice = stickerPackPrice(product.slug, it.size) ?? product.price;
+    itemsTotal += unitPrice * qty;
+    orderItems.push({
+      productId: product.id,
+      title: product.title + customSuffix,
+      size: it.size,
+      price: unitPrice,
+      qty,
+    });
   }
 
-  const deliveryCost = itemsTotal >= FREE_SHIPPING_THRESHOLD ? 0 : deliveryDef.cost;
+  // Стоимость доставки считаем на сервере (клиенту не доверяем).
+  // Бесплатно от порога; для СДЭК — реальный тариф по API до ПВЗ; иначе базовый тариф.
+  let deliveryCost: number;
+  if (itemsTotal >= FREE_SHIPPING_THRESHOLD) {
+    deliveryCost = 0;
+  } else if (delivery.method === "cdek") {
+    const totalQty = orderItems.reduce((s, i) => s + i.qty, 0);
+    const quote = await calcToCity(cityCode, totalQty);
+    if (!quote) {
+      return NextResponse.json(
+        { ok: false, error: "Не удалось рассчитать доставку СДЭК. Выберите пункт выдачи заново." },
+        { status: 502 },
+      );
+    }
+    deliveryCost = quote.cost;
+  } else {
+    deliveryCost = deliveryDef.cost;
+  }
+
+  // Для СДЭК сохраняем выбранный ПВЗ; иначе — введённый адрес.
+  const storedAddress =
+    delivery.method === "cdek"
+      ? `СДЭК ПВЗ: ${delivery.pvzAddress ?? ""}${delivery.cityName ? `, ${delivery.cityName}` : ""} (${delivery.pvzCode})`
+      : delivery.address?.trim() || null;
+
   const total = itemsTotal + deliveryCost;
   const number = orderNumber();
   const customerId = await getCurrentCustomerId();
@@ -80,9 +140,11 @@ export async function POST(request: NextRequest) {
       phone: customer.phone.trim(),
       email: customer.email?.trim() || null,
       deliveryMethod: delivery.method,
-      deliveryAddress: delivery.address?.trim() || null,
+      deliveryAddress: storedAddress,
+      cdekPvzCode: delivery.method === "cdek" ? delivery.pvzCode ?? null : null,
       deliveryCost,
       comment: comment?.trim() || null,
+      telegramId: telegramId?.trim() || null,
       paymentMethod,
       itemsTotal,
       total,
@@ -90,6 +152,22 @@ export async function POST(request: NextRequest) {
       items: { create: orderItems },
     },
   });
+
+  // Уведомление владельцу — не блокируем оформление (шлём в фоне с ретраями).
+  void notifyNewOrder({
+    number,
+    items: orderItems,
+    itemsTotal,
+    deliveryCost,
+    total,
+    customerName: order.customerName,
+    phone: order.phone,
+    email: order.email,
+    deliveryMethod: order.deliveryMethod,
+    deliveryAddress: order.deliveryAddress,
+    paymentMethod: order.paymentMethod,
+    comment: order.comment,
+  }).catch(() => {});
 
   // Доставка через поддержку (Беларусь / другие страны / нет СДЭК и Почты) —
   // оформляем без онлайн-оплаты: стоимость доставки и оплату согласуем в Telegram.
@@ -105,6 +183,8 @@ export async function POST(request: NextRequest) {
     description: `Заказ ${number} в LMH`,
     phone: customer.phone,
     email: customer.email,
+    items: orderItems.map((i) => ({ title: i.title, price: i.price, qty: i.qty })),
+    deliveryCost,
   };
   const pay =
     paymentMethod === "installment" ? await initInstallmentPayment(initArgs) : await initPayment(initArgs);

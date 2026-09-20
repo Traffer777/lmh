@@ -4,6 +4,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Ticker from "@/components/Ticker";
+import RegisterPrompt from "@/components/RegisterPrompt";
+import ContestBanner from "@/components/ContestBanner";
 
 const display = Oswald({
   subsets: ["latin", "cyrillic"],
@@ -39,11 +41,13 @@ export default function RootLayout({
         <div className="bg-marks" aria-hidden />
         <div className="grain" aria-hidden />
         <div className="relative z-10 flex min-h-screen flex-col">
+          <ContestBanner />
           <Header />
           <Ticker />
           <main className="flex-1">{children}</main>
           <Footer />
         </div>
+        <RegisterPrompt />
       </body>
     </html>
   );

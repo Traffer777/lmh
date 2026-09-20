@@ -40,6 +40,19 @@ export default async function AdminOrderDetail({
           {order.deliveryAddress && <p className="text-sm text-fg-dim">{order.deliveryAddress}</p>}
           <p className="mono mt-2 text-sm">{paymentLabel(order.paymentMethod)}</p>
           {order.paymentId && <p className="mono text-xs text-fg-dim">ID платежа: {order.paymentId}</p>}
+          {order.trackNumber && (
+            <p className="mono mt-2 text-sm">
+              Трек СДЭК:{" "}
+              <a
+                href={`https://www.cdek.ru/ru/tracking?order_id=${encodeURIComponent(order.trackNumber)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent hover:underline"
+              >
+                {order.trackNumber} ↗
+              </a>
+            </p>
+          )}
         </div>
       </div>
 

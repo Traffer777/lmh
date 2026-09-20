@@ -3,6 +3,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type CartCustom = { name?: string; number?: string };
+
 export type CartItem = {
   productId: number;
   slug: string;
@@ -12,19 +14,24 @@ export type CartItem = {
   qty: number;
   image?: string;
   maxStock: number;
+  // Персональное нанесение (форма со своим именем/номером на спине).
+  custom?: CartCustom;
 };
 
 type CartState = {
   items: CartItem[];
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  remove: (productId: number, size: string) => void;
-  setQty: (productId: number, size: string, qty: number) => void;
+  remove: (productId: number, size: string, custom?: CartCustom) => void;
+  setQty: (productId: number, size: string, qty: number, custom?: CartCustom) => void;
   clear: () => void;
   count: () => number;
   total: () => number;
 };
 
-const keyOf = (id: number, size: string) => `${id}::${size}`;
+const customTag = (c?: CartCustom) =>
+  c && (c.name || c.number) ? `${(c.name ?? "").trim()}|${(c.number ?? "").trim()}` : "";
+const keyOf = (id: number, size: string, custom?: CartCustom) =>
+  `${id}::${size}::${customTag(custom)}`;
 
 export const useCart = create<CartState>()(
   persist(
@@ -32,14 +39,13 @@ export const useCart = create<CartState>()(
       items: [],
       add: (item, qty = 1) =>
         set((state) => {
-          const existing = state.items.find(
-            (i) => keyOf(i.productId, i.size) === keyOf(item.productId, item.size),
-          );
+          const k = keyOf(item.productId, item.size, item.custom);
+          const existing = state.items.find((i) => keyOf(i.productId, i.size, i.custom) === k);
           if (existing) {
             const next = Math.min(existing.qty + qty, item.maxStock);
             return {
               items: state.items.map((i) =>
-                keyOf(i.productId, i.size) === keyOf(item.productId, item.size)
+                keyOf(i.productId, i.size, i.custom) === k
                   ? { ...i, qty: next, maxStock: item.maxStock, price: item.price }
                   : i,
               ),
@@ -47,15 +53,17 @@ export const useCart = create<CartState>()(
           }
           return { items: [...state.items, { ...item, qty: Math.min(qty, item.maxStock) }] };
         }),
-      remove: (productId, size) =>
+      remove: (productId, size, custom) =>
         set((state) => ({
-          items: state.items.filter((i) => keyOf(i.productId, i.size) !== keyOf(productId, size)),
+          items: state.items.filter(
+            (i) => keyOf(i.productId, i.size, i.custom) !== keyOf(productId, size, custom),
+          ),
         })),
-      setQty: (productId, size, qty) =>
+      setQty: (productId, size, qty, custom) =>
         set((state) => ({
           items: state.items
             .map((i) =>
-              keyOf(i.productId, i.size) === keyOf(productId, size)
+              keyOf(i.productId, i.size, i.custom) === keyOf(productId, size, custom)
                 ? { ...i, qty: Math.max(0, Math.min(qty, i.maxStock)) }
                 : i,
             )

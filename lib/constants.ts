@@ -13,9 +13,10 @@ export function categoryLabel(value: string): string {
   return CATEGORIES.find((c) => c.value === value)?.label ?? value;
 }
 
-// Способы доставки. cost — базовый тариф, руб. (демо; в проде — расчёт по API курьера).
+// Способы доставки. cost — базовый тариф, руб. Для СДЭК стоимость считается
+// динамически по API до ПВЗ (см. lib/cdek.ts); cost здесь — запасной ориентир.
 export const DELIVERY_METHODS = [
-  { value: "cdek", label: "СДЭК (ПВЗ / курьер)", cost: 350, eta: "2–5 дней" },
+  { value: "cdek", label: "СДЭК (пункт выдачи)", cost: 350, eta: "зависит от города — рассчитаем при оформлении" },
   { value: "pochta", label: "Почта России", cost: 300, eta: "5–14 дней" },
   { value: "pickup", label: "Самовывоз", cost: 0, eta: "по договорённости" },
   { value: "intl", label: "Беларусь / другие страны", cost: 0, eta: "стоимость согласуем в Telegram" },

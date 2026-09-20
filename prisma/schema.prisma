@@ -31,6 +31,7 @@ model Product {
   drop        Drop?            @relation(fields: [dropId], references: [id])
   published   Boolean          @default(true)
   limited     Boolean          @default(false)
+  releaseAt   DateTime? // если задано — до этого времени товар показан как «скоро в продаже», покупка заблокирована
   sortOrder   Int              @default(0)
   images      ProductImage[]
   variants    ProductVariant[]
@@ -74,6 +75,10 @@ model Order {
   total           Int
   status          String      @default("new") // new, paid, shipped, done, canceled
   paymentId       String? // PaymentId Т-Кассы
+  cdekPvzCode     String? // код выбранного ПВЗ СДЭК (для регистрации отправления)
+  cdekUuid        String? // UUID заказа в СДЭК
+  trackNumber     String? // трек-номер СДЭК (cdek_number)
+  telegramId      String? // Telegram ID/@username участника конкурса LMH × Глебас
   customerId      Int?
   customer        Customer?   @relation(fields: [customerId], references: [id])
   items           OrderItem[]
