@@ -1,5 +1,6 @@
 # Базовый образ через зеркало (mirror.gcr.io) — Timeweb за NAT, Docker Hub даёт 429.
 # Multi-stage + отдельный слой для deps → npm ci кэшируется, пока package*.json не менялся.
+# cache-bust: 2026-09-21T14:36Z (форсировать пересборку Timeweb)
 
 # ---- 1. deps: только node_modules (кэшируется до правки package*.json)
 FROM mirror.gcr.io/library/node:24-slim AS deps
