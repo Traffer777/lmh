@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart";
 
-const NAV = [
+type NavItem = { href: string; label: string; accent?: boolean };
+const NAV: NavItem[] = [
   { href: "/catalog", label: "Каталог" },
+  { href: "/drops/aw25", label: "AW25", accent: true },
   { href: "/drops/lead-the-crowd", label: "Lead The Crowd" },
   { href: "/about", label: "Бренд" },
   { href: "/stickers", label: "Стикеры" },
@@ -34,7 +36,11 @@ export default function Header() {
             <Link
               key={n.href}
               href={n.href}
-              className="mono text-xs uppercase tracking-widest text-fg-dim transition-colors hover:text-fg"
+              className={
+                n.accent
+                  ? "mono text-xs uppercase tracking-widest text-accent transition-colors hover:text-fg"
+                  : "mono text-xs uppercase tracking-widest text-fg-dim transition-colors hover:text-fg"
+              }
             >
               {n.label}
             </Link>
@@ -68,7 +74,11 @@ export default function Header() {
               key={n.href}
               href={n.href}
               onClick={() => setOpen(false)}
-              className="mono border-b border-line px-4 py-3 text-xs uppercase tracking-widest text-fg-dim hover:text-fg"
+              className={
+                n.accent
+                  ? "mono border-b border-line px-4 py-3 text-xs uppercase tracking-widest text-accent hover:text-fg"
+                  : "mono border-b border-line px-4 py-3 text-xs uppercase tracking-widest text-fg-dim hover:text-fg"
+              }
             >
               {n.label}
             </Link>
