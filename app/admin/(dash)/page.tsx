@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, formatDate } from "@/lib/format";
 import { orderStatusLabel } from "@/lib/constants";
+import SeedAw25Button from "@/components/admin/SeedAw25Button";
 
 export default async function AdminDashboard() {
   const [products, drops, orders, paid, recent] = await Promise.all([
@@ -32,6 +33,8 @@ export default async function AdminDashboard() {
           </Link>
         ))}
       </div>
+
+      <SeedAw25Button />
 
       <div className="mt-10 flex items-center justify-between">
         <h2 className="display text-2xl">Последние заказы</h2>
