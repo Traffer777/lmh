@@ -4,8 +4,8 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-// Старт продаж — 18:00 МСК сегодня (2026-09-20). МСК = UTC+3, поэтому UTC 15:00.
-const RELEASE_AT = new Date("2026-09-20T15:00:00.000Z");
+// Старт продаж — 18:00 МСК 2026-09-21. МСК = UTC+3, поэтому UTC 15:00.
+const RELEASE_AT = new Date("2026-09-21T15:00:00.000Z");
 
 const OS = (n = 10) => [{ size: "OS", stock: n }];
 const only = (size, stock = 5) => [

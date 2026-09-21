@@ -77,6 +77,11 @@ export async function POST(request: NextRequest) {
   for (const it of items) {
     const product = products.find((p) => p.id === it.productId);
     if (!product) return NextResponse.json({ ok: false, error: "Товар недоступен." }, { status: 400 });
+    if (product.releaseAt && product.releaseAt.getTime() > Date.now())
+      return NextResponse.json(
+        { ok: false, error: `«${product.title}» — старт продаж ${product.releaseAt.toLocaleString("ru-RU")}.` },
+        { status: 400 },
+      );
     const variant = product.variants.find((v) => v.size === it.size);
     if (!variant) return NextResponse.json({ ok: false, error: `Нет размера ${it.size}.` }, { status: 400 });
     const qty = Math.max(1, Math.floor(it.qty));

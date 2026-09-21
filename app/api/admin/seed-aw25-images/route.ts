@@ -31,10 +31,13 @@ export async function POST() {
     report.push({ slug: p.slug, count: images.length });
   }
 
+  // Старт продаж AW25 — 18:00 МСК 2026-09-21 (UTC+3 → 15:00 UTC).
+  // До этого времени карточки видны с бейджем «Скоро», покупка блокируется UI и /api/orders.
+  const releaseAt = new Date("2026-09-21T15:00:00.000Z");
   const upd = await prisma.product.updateMany({
     where: { drop: { slug: "aw25" } },
-    data: { published: true, releaseAt: null },
+    data: { published: true, releaseAt },
   });
 
-  return NextResponse.json({ published: upd.count, images: report });
+  return NextResponse.json({ published: upd.count, images: report, releaseAt });
 }

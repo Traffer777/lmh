@@ -47,3 +47,6 @@ next-env.d.ts
 /public/uploads/*
 !/public/uploads/.gitkeep
 /.claude/
+# Сырые фотки для дропов (заливаются в public/products/{slug}.jpg вручную)
+/новый дроп*
+/drop-raw*
