@@ -16,9 +16,6 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-# Cache-bust: ENV меняет hash последующих COPY/RUN (комментарий этого не делает).
-# Меняй значение при каждом принудительном пересборе.
-ENV CACHEBUST=2026-09-21T15-25Z
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build

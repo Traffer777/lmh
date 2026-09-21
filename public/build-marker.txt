@@ -1,3 +1,0 @@
-commit=WILL_UPDATE
-built=2026-09-21T14:52:00Z
-attempt=2 (форсированный rebuild)

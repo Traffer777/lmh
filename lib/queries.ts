@@ -1,7 +1,16 @@
 import { prisma } from "@/lib/prisma";
 
-// Фолбэк-галерея из /public/products/{slug}[-N].jpg — на случай, если в БД ещё нет ProductImage.
-// Файлы лежат в репо (public/products/), деплоятся вместе с приложением.
+// AW25-фото отдаём через jsDelivr (GitHub CDN) — Timeweb Docker кэширует public/ и файлы дропа
+// физически не попадают в контейнер. Файлы лежат в git → CDN отдаёт их напрямую.
+const CDN_BASE = "https://cdn.jsdelivr.net/gh/Traffer777/lmh@main/public";
+
+function productUrl(filename: string): string {
+  // Для aw25-* используем CDN, всё остальное — локальный /public/
+  if (filename.startsWith("aw25-")) return `${CDN_BASE}/products/${filename}`;
+  return `/products/${filename}`;
+}
+
+// Фолбэк-галерея на случай, если в БД ещё нет ProductImage.
 const FILE_EXTRAS: Record<string, string[]> = {
   "aw25-pants-velour-wide": ["2"],
   "aw25-puffer": ["2", "3"],
@@ -10,16 +19,26 @@ const FILE_EXTRAS: Record<string, string[]> = {
 
 type ImgLike = { url: string; alt: string | null; sortOrder: number };
 function synthesizeImages(slug: string, title: string): ImgLike[] {
-  const imgs: ImgLike[] = [{ url: `/products/${slug}.jpg`, alt: title, sortOrder: 0 }];
+  const imgs: ImgLike[] = [{ url: productUrl(`${slug}.jpg`), alt: title, sortOrder: 0 }];
   (FILE_EXTRAS[slug] ?? []).forEach((suf, i) =>
-    imgs.push({ url: `/products/${slug}-${suf}.jpg`, alt: title, sortOrder: i + 1 }),
+    imgs.push({ url: productUrl(`${slug}-${suf}.jpg`), alt: title, sortOrder: i + 1 }),
   );
   return imgs;
+}
+
+// Переписывает уже существующие в БД URL типа /products/aw25-*.jpg на CDN.
+function rewriteToCdn(images: ImgLike[]): ImgLike[] {
+  return images.map((im) => {
+    const m = im.url.match(/^\/products\/(aw25-[^/]+)$/);
+    return m ? { ...im, url: `${CDN_BASE}/products/${m[1]}` } : im;
+  });
 }
 
 function fillFallbackImages(p: { slug: string; title: string; images: ImgLike[] }): void {
   if (!p.images || p.images.length === 0) {
     p.images = synthesizeImages(p.slug, p.title);
+  } else {
+    p.images = rewriteToCdn(p.images);
   }
 }
 
