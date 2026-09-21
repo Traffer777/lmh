@@ -16,9 +16,7 @@ export default function SeedAw25Button() {
       if (!r.ok) {
         setMsg(`Ошибка: ${data.error ?? r.status}`);
       } else {
-        setMsg(
-          `✓ Опубликовано ${data.published} товаров · старт продаж ${new Date(data.releaseAt).toLocaleString("ru-RU")}`,
-        );
+        setMsg(`✓ Опубликовано ${data.published} товаров · продажи открыты`);
       }
     } catch (e) {
       setMsg(`Сеть: ${(e as Error).message}`);
@@ -31,8 +29,8 @@ export default function SeedAw25Button() {
     <div className="mt-6 border border-line bg-bg-2 p-6">
       <h3 className="display text-xl">Дроп AW25</h3>
       <p className="mt-2 text-sm text-fg-dim">
-        Пересеет фото, поставит published, releaseAt = 18:00 МСК 2026-09-21. До релиза
-        карточки показываются с бейджем «Скоро», покупка блокируется.
+        Пересеет фото, поставит published=true и снимет бейдж «Скоро» — товары
+        сразу доступны к покупке.
       </p>
       <button
         onClick={run}
