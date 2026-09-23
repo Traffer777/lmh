@@ -105,6 +105,7 @@ function RealCard({ p }: { p: ProductWithRelations }) {
 }
 
 export default function CtrlVDrop({ products = [] }: { products?: ProductWithRelations[] }) {
+  if (products.length === 0) return null;
   const hasReal = products.length > 0;
   // дублируем ленту ×2 для бесшовной прокрутки
   const track = hasReal ? [...products, ...products] : [...MOCK, ...MOCK];
