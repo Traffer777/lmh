@@ -53,7 +53,7 @@ export default function ContestProgress() {
           <div className="h-full bg-accent transition-all" style={{ width: `${progress}%` }} />
         </div>
         <p className="mono mt-3 text-xs text-fg-dim">
-          Финальный розыгрыш стартует, когда мы вместе оплатим 1000 заказов LMH.
+          Финальный розыгрыш стартует, когда мы вместе оплатим 1000 заказов с товарами LMH × ГЛЕБАС.
         </p>
       </div>
 

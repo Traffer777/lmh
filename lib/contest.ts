@@ -4,19 +4,27 @@ import { ticketsForOrder } from "@/lib/tickets";
 const CONTEST_GOAL = 1000;
 const BROADCAST_STEP = 10;
 
+// В розыгрыше участвуют только покупки коллекции LMH × Глебас (drop.slug = "glebas") —
+// билеты и оплаченные заказы для счётчика считаем исключительно по этой линейке.
+const GLEBAS_DROP_FILTER = { product: { drop: { slug: "glebas" } } } as const;
+
 export async function notifyContestBot(orderId: number): Promise<void> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: { include: { product: true } } },
+    include: { items: { include: { product: { include: { drop: true } } } } },
   });
   if (!order?.telegramId) return;
 
   const tgId = order.telegramId.replace(/^@/, "").trim();
   if (!tgId) return;
 
+  const glebasItems = order.items.filter((i) => i.product?.drop?.slug === "glebas");
+  if (glebasItems.length === 0) return; // в заказе нет товаров LMH × Глебас — билеты не начисляются
+
+  const glebasSubtotal = glebasItems.reduce((s, i) => s + i.price * i.qty, 0);
   const tickets = ticketsForOrder(
-    order.items.map((i) => ({ category: i.product?.category ?? null, qty: i.qty })),
-    order.itemsTotal,
+    glebasItems.map((i) => ({ category: i.product?.category ?? null, qty: i.qty })),
+    glebasSubtotal,
   );
   if (tickets.total <= 0) return;
 
@@ -52,7 +60,9 @@ export async function notifyContestBot(orderId: number): Promise<void> {
 // Счётчик оплаченных заказов пересёк кратное 10 — шлём хайп-сообщение всем
 // подписчикам бота. Защита от повторной отправки — уникальный BotBroadcast.milestone.
 export async function checkAndBroadcastMilestone(): Promise<void> {
-  const paidOrders = await prisma.order.count({ where: { status: { in: ["paid", "shipped", "done"] } } });
+  const paidOrders = await prisma.order.count({
+    where: { status: { in: ["paid", "shipped", "done"] }, items: { some: GLEBAS_DROP_FILTER } },
+  });
   const milestone = Math.floor(paidOrders / BROADCAST_STEP) * BROADCAST_STEP;
   if (milestone < BROADCAST_STEP) return;
 

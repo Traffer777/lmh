@@ -598,7 +598,8 @@ export default function CheckoutPage() {
               />
               <p className="mt-2 text-xs text-fg-2">
                 Укажи свой Telegram — начислим билеты на розыгрыш{" "}
-                <span className="text-fg">стразовой Приоры</span>.
+                <span className="text-fg">стразовой Приоры</span>. Билеты начисляются только за
+                товары коллекции LMH × ГЛЕБАС в заказе.
               </p>
             </div>
           </section>

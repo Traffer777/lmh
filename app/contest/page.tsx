@@ -5,7 +5,7 @@ import ContestProgress from "@/components/ContestProgress";
 export const metadata: Metadata = {
   title: "LMH × ГЛЕБАС — розыгрыш стразовой Приоры",
   description:
-    "Купи мерч LMH — получи билеты на розыгрыш стразовой Приоры. При 1000 оплаченных заказов запускаем финальный розыгрыш.",
+    "Купи одежду из коллекции LMH × ГЛЕБАС — получи билеты на розыгрыш стразовой Приоры. При 1000 оплаченных заказов запускаем финальный розыгрыш.",
 };
 
 const TICKETS = [
@@ -27,24 +27,29 @@ export default function ContestRulesPage() {
 
       <ContestProgress />
 
-      <Link href="/catalog" className="btn btn-accent mt-6">
-        Смотреть каталог →
+      <p className="mono mt-6 border border-accent/40 bg-accent/10 p-4 text-sm">
+        ⚠️ В розыгрыше участвуют <span className="text-accent">только покупки одежды из коллекции LMH × ГЛЕБАС</span>.
+        Остальной ассортимент LMH в счёт заказов и билетов не идёт.
+      </p>
+
+      <Link href="/drops/glebas" className="btn btn-accent mt-6">
+        Смотреть коллекцию LMH × ГЛЕБАС →
       </Link>
 
       <section className="mt-14">
         <h2 className="display text-3xl">Как участвовать</h2>
         <ol className="mono mt-4 space-y-2 text-sm">
           <li>
-            1. Купи мерч LMH — при оформлении можешь указать Telegram в отдельном поле,
-            билеты начислятся автоматически после оплаты.
+            1. Купи одежду из коллекции LMH × ГЛЕБАС — при оформлении можешь указать Telegram в
+            отдельном поле, билеты начислятся автоматически после оплаты.
           </li>
-          <li>2. Следи за счётчиком на этой странице — он считает оплаченные заказы в реальном времени.</li>
+          <li>2. Следи за счётчиком на этой странице — он считает оплаченные заказы LMH × ГЛЕБАС в реальном времени.</li>
           <li>3. При 1000 оплаченных заказов — тянем главный приз.</li>
         </ol>
       </section>
 
       <section className="mt-12">
-        <h2 className="display text-3xl">Билеты за товары</h2>
+        <h2 className="display text-3xl">Билеты за товары LMH × ГЛЕБАС</h2>
         <div className="mt-4 border border-line">
           {TICKETS.map((t) => (
             <div key={t.cat} className="flex justify-between border-b border-line px-4 py-3 last:border-b-0 text-sm">
@@ -53,18 +58,20 @@ export default function ContestRulesPage() {
             </div>
           ))}
         </div>
-        <p className="mono mt-3 text-xs text-fg-dim">Билеты за все позиции суммируются.</p>
+        <p className="mono mt-3 text-xs text-fg-dim">
+          Билеты начисляются только за товары коллекции LMH × ГЛЕБАС в заказе, за все такие позиции суммируются.
+        </p>
       </section>
 
       <section className="mt-12">
         <h2 className="display text-3xl">Бонусы за корзину</h2>
         <ul className="mono mt-4 space-y-2 text-sm">
           <li>
-            <span className="text-accent">≥ 30 000 ₽</span> — +3 бонусных билета к заказу.
+            <span className="text-accent">≥ 30 000 ₽</span> товарами LMH × ГЛЕБАС в заказе — +3 бонусных билета.
           </li>
           <li>
-            <span className="text-accent">≥ 50 000 ₽</span> — <span className="text-accent">×2</span> ко всей
-            сумме билетов заказа.
+            <span className="text-accent">≥ 50 000 ₽</span> товарами LMH × ГЛЕБАС в заказе —{" "}
+            <span className="text-accent">×2</span> ко всей сумме билетов заказа.
           </li>
         </ul>
       </section>
@@ -72,9 +79,11 @@ export default function ContestRulesPage() {
       <section className="mt-12 border-t border-line pt-8 text-sm text-fg-dim">
         <h2 className="display text-2xl text-fg">Правила и юридическое</h2>
         <p className="mt-3">
-          Розыгрыш проводится LMH совместно с Глебасом. Победитель определяется случайным образом
-          среди всех выданных билетов после достижения отметки в 1000 оплаченных заказов.
-          Стоимость приза, порядок передачи и налоги — по договорённости с победителем.
+          Розыгрыш проводится LMH совместно с Глебасом. Участвуют только заказы, содержащие товары
+          коллекции LMH × ГЛЕБАС — покупки остального ассортимента LMH билетов не дают и в счётчик
+          заказов не входят. Победитель определяется случайным образом среди всех выданных билетов
+          после достижения отметки в 1000 оплаченных заказов LMH × ГЛЕБАС. Стоимость приза, порядок
+          передачи и налоги — по договорённости с победителем.
         </p>
         <p className="mt-3">
           Возврат/отмена заказа списывает начисленные по нему билеты. Использование фейковых

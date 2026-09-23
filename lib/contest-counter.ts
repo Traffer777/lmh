@@ -11,8 +11,12 @@ export type ContestCounter = {
 const GOAL = 1000;
 
 export async function getContestCounter(): Promise<ContestCounter> {
+  // В розыгрыше участвуют только заказы с товарами LMH × Глебас (drop.slug = "glebas").
   const paidOrders = await prisma.order.count({
-    where: { status: { in: ["paid", "shipped", "done"] } },
+    where: {
+      status: { in: ["paid", "shipped", "done"] },
+      items: { some: { product: { drop: { slug: "glebas" } } } },
+    },
   });
   return { paidOrders, goal: GOAL };
 }
