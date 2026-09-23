@@ -7,7 +7,8 @@ import { useCart } from "@/lib/cart";
 type NavItem = { href: string; label: string; accent?: boolean };
 const NAV: NavItem[] = [
   { href: "/catalog", label: "Каталог" },
-  { href: "/drops/aw25", label: "AW25", accent: true },
+  { href: "/drops/glebas", label: "LMH × Глебас", accent: true },
+  { href: "/drops/aw25", label: "AW25" },
   { href: "/drops/lead-the-crowd", label: "Lead The Crowd" },
   { href: "/about", label: "Бренд" },
   { href: "/stickers", label: "Стикеры" },

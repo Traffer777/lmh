@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 const CDN_BASE = "https://cdn.jsdelivr.net/gh/Traffer777/lmh@main/public";
 
 function productUrl(filename: string): string {
-  // Для aw25-* используем CDN, всё остальное — локальный /public/
-  if (filename.startsWith("aw25-")) return `${CDN_BASE}/products/${filename}`;
+  if (filename.startsWith("aw25-") || filename.startsWith("glebas-"))
+    return `${CDN_BASE}/products/${filename}`;
   return `/products/${filename}`;
 }
 
@@ -15,6 +15,11 @@ const FILE_EXTRAS: Record<string, string[]> = {
   "aw25-pants-velour-wide": ["2"],
   "aw25-puffer": ["2", "3"],
   "aw25-bag-lmh": ["2"],
+  "glebas-pants": ["2"],
+  "glebas-pants-rhinestone": ["2", "3"],
+  "glebas-ziphoodie-rhinestone": ["2", "3"],
+  "glebas-ziphoodie": ["2"],
+  "glebas-hoodie": ["2"],
 };
 
 type ImgLike = { url: string; alt: string | null; sortOrder: number };
@@ -29,7 +34,7 @@ function synthesizeImages(slug: string, title: string): ImgLike[] {
 // Переписывает уже существующие в БД URL типа /products/aw25-*.jpg на CDN.
 function rewriteToCdn(images: ImgLike[]): ImgLike[] {
   return images.map((im) => {
-    const m = im.url.match(/^\/products\/(aw25-[^/]+)$/);
+    const m = im.url.match(/^\/products\/((aw25|glebas)-[^/]+)$/);
     return m ? { ...im, url: `${CDN_BASE}/products/${m[1]}` } : im;
   });
 }
