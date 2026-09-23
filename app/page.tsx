@@ -2,29 +2,12 @@ import Link from "next/link";
 import HeroVideo from "@/components/HeroVideo";
 import ProductCard from "@/components/ProductCard";
 import PeelSticker from "@/components/PeelSticker";
-import { getPublishedProducts } from "@/lib/queries";
+import { getFeaturedProducts } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-const FEATURED_SLUGS = [
-  "bomber-leopard",
-  "glebas-puffer",
-  "aw25-puffer",
-  "aw25-leather-jacket",
-  "aw25-suit-camo",
-  "aw25-suit-waterproof",
-  "aw25-bomber-velour",
-  "aw25-windbreaker-reversible",
-  "aw25-windbreaker",
-  "aw25-jacket-reflective",
-];
-
 export default async function Home() {
-  const products = await getPublishedProducts();
-  const bySlug = new Map(products.map((p) => [p.slug, p]));
-  const featured = FEATURED_SLUGS.map((s) => bySlug.get(s)).filter(
-    (p): p is NonNullable<typeof p> => Boolean(p),
-  );
+  const featured = await getFeaturedProducts();
   return (
     <div>
       {/* HERO — видео первым */}

@@ -105,6 +105,22 @@ export async function getDrops() {
   });
 }
 
+const FEATURED_CATEGORIES = ["puffer", "jacket", "куртка", "suit", "костюм"];
+
+export async function getFeaturedProducts() {
+  const rows = await prisma.product.findMany({
+    where: { published: true, category: { in: FEATURED_CATEGORIES } },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    include: {
+      images: { orderBy: { sortOrder: "asc" } },
+      variants: { orderBy: { id: "asc" } },
+      drop: true,
+    },
+  });
+  for (const p of rows) fillFallbackImages(p);
+  return rows;
+}
+
 export function inStock(variants: { stock: number }[]): boolean {
   return variants.some((v) => v.stock > 0);
 }
