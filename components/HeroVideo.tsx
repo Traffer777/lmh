@@ -16,8 +16,14 @@ export default function HeroVideo() {
     const onTime = () => {
       if (v.currentTime >= 15) v.currentTime = 0;
     };
+    // На медленной сети запрос куска видео иногда обрывается и браузер сам
+    // ставит видео на паузу без ошибки — переигрываем (фон декоративный, controls нет).
     v.addEventListener("timeupdate", onTime);
-    return () => v.removeEventListener("timeupdate", onTime);
+    v.addEventListener("pause", tryPlay);
+    return () => {
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("pause", tryPlay);
+    };
   }, []);
 
   return (
