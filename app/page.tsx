@@ -1,9 +1,8 @@
 import Link from "next/link";
 import HeroVideo from "@/components/HeroVideo";
 import ProductCard from "@/components/ProductCard";
-import CtrlVDrop from "@/components/CtrlVDrop";
 import PeelSticker from "@/components/PeelSticker";
-import { getPublishedProducts, getDropProducts } from "@/lib/queries";
+import { getPublishedProducts } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -11,14 +10,14 @@ export const dynamic = "force-dynamic";
 // сумка и футболки. Порядок = порядок на витрине; недоступные (черновики в
 // проде) просто выпадают из выборки.
 const FEATURED_SLUGS = [
-  "stripe-blackyellow", // кофта страйп (лонгслив Stripe)
-  "stripe-navygreen", // полосатый лонгслив Stripe (синий)
-  "lmh-tee-van", // футболка «Van»
-  "ctrl-v-gold-tee", // футболка с золотом (CTRL+V Gold, глиттер)
-  "lmh-tee-tyson", // футболка «Tyson»
-  "pants-crystal", // штаны со стразами (CRYSTAL)
-  "lmh-worldwide-gold", // футболка Worldwide (золотая)
-  // TODO: маленькая сумка «Нах*й луи» — в базе только большая (bag-nahuy) + клатч; добавить, когда будет фото
+  "bomber-leopard",
+  "stripe-blackyellow",
+  "stripe-navygreen",
+  "lmh-tee-van",
+  "ctrl-v-gold-tee",
+  "lmh-tee-tyson",
+  "pants-crystal",
+  "lmh-worldwide-gold",
 ];
 
 export default async function Home() {
@@ -27,10 +26,6 @@ export default async function Home() {
   const featured = FEATURED_SLUGS.map((s) => bySlug.get(s)).filter(
     (p): p is NonNullable<typeof p> => Boolean(p),
   );
-  const ctrlv = await getDropProducts("ctrl-v", {
-    includeUnpublished: process.env.NODE_ENV !== "production",
-  });
-
   return (
     <div>
       {/* HERO — видео первым */}
@@ -78,9 +73,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* ДРОП CTRL+V — после видео */}
-      <CtrlVDrop products={ctrlv} />
 
       {/* СЕТКА ТОВАРОВ */}
       <section className="mx-auto max-w-7xl px-4 py-14 md:px-6">
