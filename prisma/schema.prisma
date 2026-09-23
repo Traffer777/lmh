@@ -112,3 +112,13 @@ model Setting {
   key   String @id
   value String
 }
+
+model ContestTicket {
+  id         Int      @id @default(autoincrement())
+  telegramId String
+  orderId    Int      @unique
+  tickets    Int
+  createdAt  DateTime @default(now())
+
+  @@index([telegramId])
+}

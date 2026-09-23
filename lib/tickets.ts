@@ -5,14 +5,22 @@
 
 const PER_UNIT: Record<string, number> = {
   tshirt: 1,
+  top: 1,
   longsleeve: 1,
   shorts: 1,
   pants: 1,
+  bottom: 1,
   accessory: 1,
+  sticker: 1,
+  футболка: 1,
+  штаны: 1,
   hoodie: 2,
+  худи: 2,
   suit: 2,
+  костюм: 2,
   puffer: 4,
   jacket: 4,
+  куртка: 4,
 };
 
 export const TICKET_BONUS_THRESHOLD = 30000;
