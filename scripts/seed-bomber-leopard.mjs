@@ -6,7 +6,7 @@ const product = await p.product.create({
   data: {
     slug: "bomber-leopard",
     title: "Леопардовый бомбер LMH",
-    description: "Весенний/осенний сезон. Куртка утепленная. Логотип — вышивка.",
+    description: "Весенний/осенний сезон. Куртка утепленная. Логотип — принт.",
     category: "куртка",
     price: 6990,
     published: true,
