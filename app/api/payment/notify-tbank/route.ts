@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyInstallmentNotification } from "@/lib/tbank-installment";
 import { markOrderPaid } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
-import { notifyContestBot } from "@/lib/contest";
+import { notifyContestBot, checkAndBroadcastMilestone } from "@/lib/contest";
 
 // Вебхук Т-Банк «Долями» (Notification). Тот же формат, что у Tinkoff Acquiring:
 // подписан Token'ом (SHA-256 от отсортированных полей + Password терминала).
@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     if (justPaid) {
       const order = await prisma.order.findUnique({ where: { number: orderId }, select: { id: true } });
       if (order) void notifyContestBot(order.id).catch(() => {});
+      void checkAndBroadcastMilestone().catch(() => {});
     }
   }
 

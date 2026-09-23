@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { ticketsForOrder } from "@/lib/tickets";
 
+const CONTEST_GOAL = 1000;
+const BROADCAST_STEP = 10;
+
 export async function notifyContestBot(orderId: number): Promise<void> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -46,7 +49,35 @@ export async function notifyContestBot(orderId: number): Promise<void> {
   await sendTelegram(token, numericId, text).catch(() => {});
 }
 
-function plural(n: number): string {
+// Счётчик оплаченных заказов пересёк кратное 10 — шлём хайп-сообщение всем
+// подписчикам бота. Защита от повторной отправки — уникальный BotBroadcast.milestone.
+export async function checkAndBroadcastMilestone(): Promise<void> {
+  const paidOrders = await prisma.order.count({ where: { status: { in: ["paid", "shipped", "done"] } } });
+  const milestone = Math.floor(paidOrders / BROADCAST_STEP) * BROADCAST_STEP;
+  if (milestone < BROADCAST_STEP) return;
+
+  try {
+    await prisma.botBroadcast.create({ data: { milestone } });
+  } catch {
+    return; // уже разослали на этой отметке
+  }
+
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+
+  const remaining = Math.max(0, CONTEST_GOAL - paidOrders);
+  const text =
+    `🏁 Приора ещё ближе!\n\n` +
+    `Оплаченных заказов: ${paidOrders} / ${CONTEST_GOAL}\n` +
+    (remaining > 0
+      ? `Осталось ${remaining} заказ${plural(remaining)} до розыгрыша стразовой Приоры! 🚗`
+      : `Цель достигнута — розыгрыш Приоры запускается! 🚗✨`);
+
+  const subs = await prisma.botSubscriber.findMany({ select: { chatId: true } });
+  await Promise.all(subs.map((s) => sendTelegram(token, s.chatId, text).catch(() => {})));
+}
+
+export function plural(n: number): string {
   const mod = n % 10;
   const mod100 = n % 100;
   if (mod === 1 && mod100 !== 11) return "";

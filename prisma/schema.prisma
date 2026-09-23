@@ -122,3 +122,17 @@ model ContestTicket {
 
   @@index([telegramId])
 }
+
+// Все, кто хоть раз написал боту — получают рассылку о прогрессе конкурса.
+model BotSubscriber {
+  id        Int      @id @default(autoincrement())
+  chatId    String   @unique
+  createdAt DateTime @default(now())
+}
+
+// Отметка «на N оплаченных заказах разослали хайп-сообщение» — сработает
+// ровно один раз даже при параллельных вебхуках оплаты (unique по milestone).
+model BotBroadcast {
+  milestone Int      @id
+  createdAt DateTime @default(now())
+}
