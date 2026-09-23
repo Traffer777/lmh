@@ -6,18 +6,17 @@ import { getPublishedProducts } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-// Подборка «Новое» — разнообразие категорий: худи, штаны (стразы CRYSTAL),
-// сумка и футболки. Порядок = порядок на витрине; недоступные (черновики в
-// проде) просто выпадают из выборки.
 const FEATURED_SLUGS = [
   "bomber-leopard",
-  "stripe-blackyellow",
-  "stripe-navygreen",
-  "lmh-tee-van",
-  "ctrl-v-gold-tee",
-  "lmh-tee-tyson",
-  "pants-crystal",
-  "lmh-worldwide-gold",
+  "glebas-puffer",
+  "aw25-puffer",
+  "aw25-leather-jacket",
+  "aw25-suit-camo",
+  "aw25-suit-waterproof",
+  "aw25-bomber-velour",
+  "aw25-windbreaker-reversible",
+  "aw25-windbreaker",
+  "aw25-jacket-reflective",
 ];
 
 export default async function Home() {
