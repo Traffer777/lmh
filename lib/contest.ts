@@ -62,7 +62,8 @@ export async function checkAndBroadcastMilestone(): Promise<void> {
     return; // уже разослали на этой отметке
   }
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  // Рассылка идёт от отдельного бота @lmhPRIORAbot, не от @lmhworldwide_bot.
+  const token = process.env.TELEGRAM_PRIORA_BOT_TOKEN;
   if (!token) return;
 
   const remaining = Math.max(0, CONTEST_GOAL - paidOrders);

@@ -23,10 +23,6 @@ export async function POST(request: NextRequest) {
 
   if (!chatId || !text) return new NextResponse("ok");
 
-  await prisma.botSubscriber
-    .upsert({ where: { chatId }, create: { chatId }, update: {} })
-    .catch(() => {});
-
   if (text === "/start") {
     const reply =
       `Привет${firstName ? `, ${firstName}` : ""}! 👋\n\n` +
