@@ -598,12 +598,7 @@ export default function CheckoutPage() {
               />
               <p className="mt-2 text-xs text-fg-2">
                 Укажи свой Telegram — начислим билеты на розыгрыш{" "}
-                <span className="text-fg">стразовой Приоры</span>. Как узнать ID: напиши{" "}
-                <code>/id</code> в{" "}
-                <a href="https://t.me/lmhworldwide_bot" target="_blank" rel="noopener" className="underline">
-                  @lmhworldwide_bot
-                </a>
-                .
+                <span className="text-fg">стразовой Приоры</span>.
               </p>
             </div>
           </section>

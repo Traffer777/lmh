@@ -53,27 +53,19 @@ export default async function ContestRulesPage() {
         </p>
       </div>
 
-      <a
-        href="https://t.me/lmhworldwide_bot?start=contest"
-        target="_blank"
-        rel="noopener"
-        className="btn btn-accent mt-6"
-      >
-        Участвовать через Telegram-бота →
-      </a>
+      <Link href="/catalog" className="btn btn-accent mt-6">
+        Смотреть каталог →
+      </Link>
 
       <section className="mt-14">
         <h2 className="display text-3xl">Как участвовать</h2>
         <ol className="mono mt-4 space-y-2 text-sm">
-          <li>1. Открой @lmhworldwide_bot — получи свой номер участника (например #01842).</li>
           <li>
-            2. Подпишись на LIVE-канал розыгрыша — +1 билет за бесплатный вход.
+            1. Купи мерч LMH — при оформлении можешь указать Telegram в отдельном поле,
+            билеты начислятся автоматически после оплаты.
           </li>
-          <li>
-            3. Купи мерч LMH — при оформлении укажи Telegram-ID в отдельном поле, билеты
-            начислятся автоматически после оплаты.
-          </li>
-          <li>4. При 1000 оплаченных заказов — тянем главный приз.</li>
+          <li>2. Следи за счётчиком на этой странице — он считает оплаченные заказы в реальном времени.</li>
+          <li>3. При 1000 оплаченных заказов — тянем главный приз.</li>
         </ol>
       </section>
 
@@ -142,16 +134,7 @@ export default async function ContestRulesPage() {
         <p className="mt-6">
           <Link href="/catalog" className="underline">
             Смотреть каталог
-          </Link>{" "}
-          ·{" "}
-          <a
-            href="https://t.me/lmhworldwide_bot?start=contest"
-            target="_blank"
-            rel="noopener"
-            className="underline"
-          >
-            Открыть бота
-          </a>
+          </Link>
         </p>
       </section>
     </div>

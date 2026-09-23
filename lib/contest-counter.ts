@@ -1,30 +1,18 @@
-// Читает счётчик конкурса LMH × Глебас с бот-сервера.
-// Магазин ничего не считает сам — вся правда о заказах у бота.
+// Счётчик конкурса LMH × Глебас — считаем оплаченные заказы напрямую из базы,
+// без внешнего бота (раньше тут был запрос к отдельному "бот-серверу", которого
+// по факту не существовало — счётчик всегда показывал 0).
+import { prisma } from "@/lib/prisma";
 
 export type ContestCounter = {
   paidOrders: number;
   goal: number;
-  totalTickets: number;
 };
 
-const DEFAULT: ContestCounter = { paidOrders: 0, goal: 1000, totalTickets: 0 };
+const GOAL = 1000;
 
 export async function getContestCounter(): Promise<ContestCounter> {
-  const api = process.env.LMH_BOT_API;
-  if (!api) return DEFAULT;
-  try {
-    const res = await fetch(`${api.replace(/\/$/, "")}/counter`, {
-      next: { revalidate: 10 },
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!res.ok) return DEFAULT;
-    const data = (await res.json()) as Partial<ContestCounter>;
-    return {
-      paidOrders: Number(data.paidOrders) || 0,
-      goal: Number(data.goal) || 1000,
-      totalTickets: Number(data.totalTickets) || 0,
-    };
-  } catch {
-    return DEFAULT;
-  }
+  const paidOrders = await prisma.order.count({
+    where: { status: { in: ["paid", "shipped", "done"] } },
+  });
+  return { paidOrders, goal: GOAL };
 }
