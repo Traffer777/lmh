@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 const CDN_BASE = "https://cdn.jsdelivr.net/gh/Traffer777/lmh@main/public";
 
 function productUrl(filename: string): string {
-  if (filename.startsWith("aw25-") || filename.startsWith("glebas-"))
+  if (filename.startsWith("aw25-") || filename.startsWith("glebas-") || filename.startsWith("bomber-"))
     return `${CDN_BASE}/products/${filename}`;
   return `/products/${filename}`;
 }
@@ -34,7 +34,7 @@ function synthesizeImages(slug: string, title: string): ImgLike[] {
 // Переписывает уже существующие в БД URL типа /products/aw25-*.jpg на CDN.
 function rewriteToCdn(images: ImgLike[]): ImgLike[] {
   return images.map((im) => {
-    const m = im.url.match(/^\/products\/((aw25|glebas)-[^/]+)$/);
+    const m = im.url.match(/^\/products\/((aw25|glebas|bomber)-[^/]+)$/);
     return m ? { ...im, url: `${CDN_BASE}/products/${m[1]}` } : im;
   });
 }
