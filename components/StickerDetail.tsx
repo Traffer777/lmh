@@ -143,7 +143,7 @@ export default function StickerDetail({ id, slug, title, description, images, va
 
         {/* Детали */}
         <div className="mono mt-10 space-y-1 border-t border-line pt-6 text-xs text-fg-dim">
-          <p>· Голографический винил — переливается на свету</p>
+          {slug === "holography" && <p>· Голографический винил — переливается на свету</p>}
           <p>· Влагостойкие, клеятся на любую гладкую поверхность</p>
           <p>· Доставка по РФ: СДЭК, Почта России, курьер</p>
         </div>

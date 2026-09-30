@@ -23,6 +23,17 @@ export const STICKERS: Sticker[] = [
       { size: "1000 шт", qty: 1000, price: 10000 },
     ],
   },
+  {
+    slug: "sticker-sakura",
+    title: "Стикер «Сакура»",
+    images: ["/stickers/sakura-1.jpg"],
+    packs: [
+      { size: "50 шт", qty: 50, price: 1000 },
+      { size: "100 шт", qty: 100, price: 1800 },
+      { size: "500 шт", qty: 500, price: 6000 },
+      { size: "1000 шт", qty: 1000, price: 10000 },
+    ],
+  },
 ];
 
 export function getSticker(slug: string): Sticker | undefined {
