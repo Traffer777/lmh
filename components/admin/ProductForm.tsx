@@ -47,6 +47,11 @@ export default function ProductForm({
   const initialStock: Record<string, string> = {};
   (initial?.variants ?? []).forEach((v) => (initialStock[v.size] = String(v.stock)));
   const [stocks, setStocks] = useState<Record<string, string>>(initialStock);
+  // Варианты вне стандартной сетки (напр. «Чёрная / Оверсайз / M») — тоже редактируем.
+  const allSizes: string[] = [
+    ...SIZES,
+    ...(initial?.variants ?? []).map((v) => v.size).filter((s) => !(SIZES as readonly string[]).includes(s)),
+  ];
 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +91,7 @@ export default function ProductForm({
     setError(null);
     if (!title.trim()) return setError("Укажите название.");
 
-    const variants = SIZES.filter((s) => stocks[s] !== undefined && stocks[s] !== "").map((s) => ({
+    const variants = allSizes.filter((s) => stocks[s] !== undefined && stocks[s] !== "").map((s) => ({
       size: s,
       stock: Number(stocks[s]) || 0,
     }));
@@ -198,8 +203,8 @@ export default function ProductForm({
             Заполните остаток для нужных размеров. Пусто = размера нет.
           </p>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-            {SIZES.map((s) => (
-              <div key={s}>
+            {allSizes.map((s) => (
+              <div key={s} className={s.length > 3 ? "col-span-3" : undefined}>
                 <div className="mono mb-1 text-center text-xs">{s}</div>
                 <input
                   className="field text-center"

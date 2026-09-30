@@ -66,12 +66,38 @@ export default function ProductDetail({
     if (available.length === 1) setSize(available[0].size);
   }, [product.variants]);
 
-  const images = product.images.length
+  // Варианты вида «Цвет / Посадка / Размер» (напр. «Чёрная / Оверсайз / M») —
+  // тогда показываем три выбора вместо одного ряда размеров.
+  const split = product.variants.map((v) => v.size.split(" / "));
+  const optioned = split.length > 0 && split.every((p) => p.length === 3);
+  const uniq = (i: number) => [...new Set(split.map((p) => p[i]))];
+  const colors = optioned ? uniq(0) : [];
+  const fits = optioned ? uniq(1) : [];
+  const letters = optioned ? uniq(2) : [];
+  const [color, setColor] = useState<string | null>(colors[0] ?? null);
+  const [fit, setFit] = useState<string | null>(fits[0] ?? null);
+  const [letter, setLetter] = useState<string | null>(null);
+  const stockOf = (c: string | null, f: string | null, l: string) =>
+    product.variants.find((v) => v.size === `${c} / ${f} / ${l}`)?.stock ?? 0;
+
+  const allImages = product.images.length
     ? product.images
     : [{ url: `/api/placeholder?t=${encodeURIComponent(product.title)}`, alt: product.title }];
+  // Фото выбранного цвета (цвет указан в alt), иначе все.
+  const colorImages = color ? allImages.filter((im) => im.alt?.includes(color)) : [];
+  const images = colorImages.length ? colorImages : allImages;
 
-  const selectedVariant = product.variants.find((v) => v.size === size) ?? null;
+  const selectedSize = optioned ? (letter ? `${color} / ${fit} / ${letter}` : null) : size;
+  const selectedVariant = product.variants.find((v) => v.size === selectedSize) ?? null;
   const anyStock = product.variants.some((v) => v.stock > 0);
+  const chipCls = (sel: boolean, disabled = false) =>
+    `mono min-w-12 border px-3 py-2 text-sm uppercase transition-colors ${
+      sel
+        ? "border-accent bg-accent text-white"
+        : disabled
+          ? "cursor-not-allowed border-line text-fg-dim line-through opacity-40"
+          : "border-line hover:border-fg"
+    }`;
   const priceless = product.price <= 0;
   // «Скоро в продаже»: тикающие часы до старта релиза (releaseAt), если он в будущем.
   const [releaseMs, setReleaseMs] = useState<number | null>(null);
@@ -229,13 +255,63 @@ export default function ProductDetail({
           <p className="mt-6 leading-relaxed text-fg-dim">{product.description}</p>
         )}
 
+        {/* Цвет и посадка */}
+        {optioned && (
+          <>
+            {colors.length > 0 && (
+              <div className="mt-8">
+                <p className="mono mb-3 text-xs uppercase tracking-widest text-fg-dim">
+                  Цвет{color ? ` · ${color}` : ""}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => {
+                        setColor(c);
+                        setActive(0);
+                      }}
+                      className={chipCls(color === c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="mt-6">
+              <p className="mono mb-3 text-xs uppercase tracking-widest text-fg-dim">Посадка</p>
+              <div className="flex flex-wrap gap-2">
+                {fits.map((f) => (
+                  <button key={f} onClick={() => setFit(f)} className={chipCls(fit === f)}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Размеры */}
-        <div className="mt-8">
+        <div className={optioned ? "mt-6" : "mt-8"}>
           <p className="mono mb-3 text-xs uppercase tracking-widest text-fg-dim">
             Размер
           </p>
           <div className="flex flex-wrap gap-2">
-            {product.variants.map((v) => {
+            {optioned && letters.map((l) => {
+              const disabled = stockOf(color, fit, l) <= 0;
+              return (
+                <button
+                  key={l}
+                  disabled={disabled}
+                  onClick={() => setLetter(l)}
+                  className={chipCls(letter === l, disabled)}
+                >
+                  {l}
+                </button>
+              );
+            })}
+            {!optioned && product.variants.map((v) => {
               const disabled = v.stock <= 0;
               const sel = size === v.size;
               return (
@@ -363,7 +439,7 @@ export default function ProductDetail({
             <span className="btn cursor-not-allowed opacity-50">Распродано</span>
           )}
         </div>
-        {!size && anyStock && !priceless && (
+        {!selectedSize && anyStock && !priceless && (
           <p className="mono mt-3 text-xs text-fg-dim">Выберите размер</p>
         )}
 
