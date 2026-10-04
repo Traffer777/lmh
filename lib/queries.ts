@@ -106,10 +106,15 @@ export async function getDrops() {
 }
 
 const FEATURED_CATEGORIES = ["puffer", "jacket", "куртка", "suit", "костюм"];
+// Отдельные товары, которые показываем в «Новом» вне этих категорий.
+const FEATURED_SLUGS = ["pants-crystal"];
 
 export async function getFeaturedProducts() {
   const rows = await prisma.product.findMany({
-    where: { published: true, category: { in: FEATURED_CATEGORIES } },
+    where: {
+      published: true,
+      OR: [{ category: { in: FEATURED_CATEGORIES } }, { slug: { in: FEATURED_SLUGS } }],
+    },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     include: {
       images: { orderBy: { sortOrder: "asc" } },
