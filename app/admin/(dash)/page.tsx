@@ -14,6 +14,20 @@ export default async function AdminDashboard() {
   ]);
   const revenue = paid.reduce((s, o) => s + o.total, 0);
 
+  // Выручка по кварталам (по московскому времени), новые сверху.
+  const byQuarter = new Map<string, { year: number; q: number; sum: number; count: number }>();
+  for (const o of paid) {
+    const msk = new Date(o.createdAt.getTime() + 3 * 3_600_000);
+    const year = msk.getUTCFullYear();
+    const q = Math.floor(msk.getUTCMonth() / 3) + 1;
+    const key = `${year}-${q}`;
+    const row = byQuarter.get(key) ?? { year, q, sum: 0, count: 0 };
+    row.sum += o.total;
+    row.count += 1;
+    byQuarter.set(key, row);
+  }
+  const quarters = [...byQuarter.values()].sort((a, b) => b.year - a.year || b.q - a.q);
+
   const cards = [
     { n: products, t: "товаров", href: "/admin/products" },
     { n: drops, t: "дропов", href: "/admin/products" },
@@ -35,6 +49,36 @@ export default async function AdminDashboard() {
       </div>
 
       <SeedAw25Button />
+
+      <h2 className="display mt-10 text-2xl">Выручка по кварталам</h2>
+      {quarters.length === 0 ? (
+        <p className="mt-4 text-fg-dim">Оплаченных заказов пока нет.</p>
+      ) : (
+        <table className="mt-4 w-full border border-line text-sm">
+          <thead className="bg-bg-2 text-left">
+            <tr className="mono text-xs uppercase tracking-widest text-fg-dim">
+              <th className="p-3">Квартал</th>
+              <th className="p-3 text-right">Заказов</th>
+              <th className="p-3 text-right">Средний чек</th>
+              <th className="p-3 text-right">Выручка</th>
+            </tr>
+          </thead>
+          <tbody>
+            {quarters.map((r) => (
+              <tr key={`${r.year}-${r.q}`} className="border-t border-line">
+                <td className="mono p-3">
+                  Q{r.q} {r.year}
+                </td>
+                <td className="mono p-3 text-right">{r.count}</td>
+                <td className="mono p-3 text-right text-fg-dim">
+                  {formatPrice(Math.round(r.sum / r.count))}
+                </td>
+                <td className="mono p-3 text-right text-accent">{formatPrice(r.sum)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <div className="mt-10 flex items-center justify-between">
         <h2 className="display text-2xl">Последние заказы</h2>
