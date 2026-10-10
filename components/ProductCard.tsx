@@ -37,6 +37,16 @@ export default function ProductCard({ product }: { product: ProductWithRelations
             </span>
           </>
         )}
+        {!available && !notReleased && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/40">
+            <span
+              className="display whitespace-nowrap bg-bg px-4 py-1 text-3xl uppercase leading-none text-white sm:text-4xl"
+              style={{ transform: "rotate(-12deg)" }}
+            >
+              Sold out
+            </span>
+          </div>
+        )}
         <div className="absolute left-0 top-0 flex flex-col gap-px">
           {product.limited && (
             <span className="mono bg-accent px-2 py-1 text-[10px] uppercase tracking-widest text-white">

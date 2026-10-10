@@ -175,6 +175,16 @@ export default function ProductDetail({
             alt={images[active]?.alt ?? product.title}
             className="h-full w-full object-contain"
           />
+          {product.variants.length > 0 && product.variants.every((v) => v.stock <= 0) && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/40">
+              <span
+                className="display whitespace-nowrap bg-bg px-6 py-2 text-5xl uppercase leading-none text-white sm:text-7xl"
+                style={{ transform: "rotate(-12deg)" }}
+              >
+                Sold out
+              </span>
+            </div>
+          )}
           {/* Живое превью нанесения на спине */}
           {showPrint && (
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
