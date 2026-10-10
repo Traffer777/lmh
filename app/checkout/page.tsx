@@ -16,7 +16,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const { items, clear } = useCart();
-  const itemsTotal = useCart((s) => s.total());
+  const cartTotal = useCart((s) => s.total());
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -26,6 +26,10 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("sbp");
   const [comment, setComment] = useState("");
   const [telegramId, setTelegramId] = useState("");
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<{ code: string; percent: number; discount: number } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [instOpen, setInstOpen] = useState(false);
@@ -52,6 +56,38 @@ export default function CheckoutPage() {
   const [cdekError, setCdekError] = useState<string | null>(null);
 
   const totalQty = useCart((s) => s.items.reduce((n, i) => n + i.qty, 0));
+  const itemsTotal = cartTotal - (promo?.discount ?? 0);
+
+  // Промокод проверяет сервер (категории и цены — из БД); при изменении корзины пересчитываем.
+  async function checkPromo(code: string) {
+    setPromoLoading(true);
+    setPromoError(null);
+    try {
+      const res = await fetch("/api/promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          items: items.map((i) => ({ productId: i.productId, size: i.size, qty: i.qty })),
+        }),
+      });
+      const d = await res.json();
+      if (d.ok) setPromo({ code: d.code, percent: d.percent, discount: d.discount });
+      else {
+        setPromo(null);
+        setPromoError(d.error ?? "Промокод не применён.");
+      }
+    } catch {
+      setPromoError("Ошибка сети. Попробуйте ещё раз.");
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+  const promoCode = promo?.code;
+  useEffect(() => {
+    if (promoCode) void checkPromo(promoCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartTotal]);
   const freeShipping = itemsTotal >= FREE_SHIPPING_THRESHOLD;
 
   useEffect(() => setMounted(true), []);
@@ -209,6 +245,7 @@ export default function CheckoutPage() {
           paymentMethod,
           comment,
           telegramId: telegramId.trim() || undefined,
+          promoCode: promo?.code,
         }),
       });
       const data = await res.json();
@@ -626,10 +663,62 @@ export default function CheckoutPage() {
               ))}
             </ul>
 
-            <div className="mono mt-5 flex justify-between border-t border-line pt-4 text-sm text-fg-dim">
-              <span>Товары</span>
-              <span>{formatPrice(itemsTotal)}</span>
+            <div className="mt-5 border-t border-line pt-4">
+              <label className="lbl">Промокод</label>
+              {promo ? (
+                <div className="mono flex items-center justify-between gap-2 border border-accent bg-accent/10 p-3 text-xs">
+                  <span>
+                    «{promo.code}» — −{promo.percent}% на одежду
+                  </span>
+                  <button
+                    type="button"
+                    className="uppercase tracking-widest text-fg-dim hover:text-accent"
+                    onClick={() => {
+                      setPromo(null);
+                      setPromoInput("");
+                    }}
+                  >
+                    убрать
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    className="field"
+                    type="text"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (promoInput.trim()) void checkPromo(promoInput);
+                      }
+                    }}
+                    placeholder="Введите код"
+                  />
+                  <button
+                    type="button"
+                    disabled={!promoInput.trim() || promoLoading}
+                    onClick={() => void checkPromo(promoInput)}
+                    className="btn whitespace-nowrap border border-line disabled:opacity-50"
+                  >
+                    {promoLoading ? "…" : "Применить"}
+                  </button>
+                </div>
+              )}
+              {promoError && <p className="mono mt-2 text-xs text-accent">{promoError}</p>}
             </div>
+
+            <div className="mono mt-4 flex justify-between text-sm text-fg-dim">
+              <span>Товары</span>
+              <span>{formatPrice(cartTotal)}</span>
+            </div>
+            {promo && (
+              <div className="mono mt-2 flex justify-between text-sm text-accent">
+                <span>Скидка по промокоду</span>
+                <span>−{formatPrice(promo.discount)}</span>
+              </div>
+            )}
             <div className="mono mt-2 flex justify-between text-sm text-fg-dim">
               <span>Доставка</span>
               <span>

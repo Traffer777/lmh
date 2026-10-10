@@ -8,6 +8,7 @@ import { DELIVERY_METHODS, PAYMENT_METHODS, FREE_SHIPPING_THRESHOLD, isSupportDe
 import { notifyNewOrder } from "@/lib/telegram";
 import { calcToCity } from "@/lib/cdek";
 import { stickerPackPrice } from "@/lib/stickers";
+import { applyPromo } from "@/lib/promo";
 
 type IncomingItem = {
   productId: number;
@@ -30,6 +31,7 @@ type Body = {
   paymentMethod: string;
   comment?: string;
   telegramId?: string;
+  promoCode?: string;
 };
 
 function orderNumber(): string {
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Некорректный запрос." }, { status: 400 });
   }
 
-  const { items, customer, delivery, paymentMethod, comment, telegramId } = body;
+  const { items, customer, delivery, paymentMethod, comment, telegramId, promoCode } = body;
 
   // Валидация формы
   if (!items?.length) return NextResponse.json({ ok: false, error: "Корзина пуста." }, { status: 400 });
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
   });
 
   const orderItems: { productId: number; title: string; size: string; price: number; qty: number }[] = [];
+  const categories: string[] = [];
   let itemsTotal = 0;
 
   for (const it of items) {
@@ -99,6 +102,7 @@ export async function POST(request: NextRequest) {
     // Для стикеров цена зависит от размера пачки (50/100/500/1000 шт); иначе — цена товара.
     const unitPrice = stickerPackPrice(product.slug, it.size) ?? product.price;
     itemsTotal += unitPrice * qty;
+    categories.push(product.category);
     orderItems.push({
       productId: product.id,
       title: product.title + customSuffix,
@@ -106,6 +110,21 @@ export async function POST(request: NextRequest) {
       price: unitPrice,
       qty,
     });
+  }
+
+  // Промокод: скидка на единицу одежды (см. lib/promo.ts).
+  let appliedPromo: string | null = null;
+  let discount = 0;
+  if (promoCode?.trim()) {
+    const res = applyPromo(
+      promoCode,
+      orderItems.map((i, idx) => ({ category: categories[idx], price: i.price, qty: i.qty })),
+    );
+    if (!res.ok) return NextResponse.json({ ok: false, error: res.error }, { status: 400 });
+    res.prices.forEach((p, idx) => (orderItems[idx].price = p));
+    discount = res.discount;
+    itemsTotal -= discount;
+    appliedPromo = res.promo.code;
   }
 
   // Стоимость доставки считаем на сервере (клиенту не доверяем).
@@ -152,6 +171,8 @@ export async function POST(request: NextRequest) {
       telegramId: telegramId?.trim() || null,
       paymentMethod,
       itemsTotal,
+      promoCode: appliedPromo,
+      discount,
       total,
       status: "new",
       items: { create: orderItems },
@@ -171,7 +192,7 @@ export async function POST(request: NextRequest) {
     deliveryMethod: order.deliveryMethod,
     deliveryAddress: order.deliveryAddress,
     paymentMethod: order.paymentMethod,
-    comment: order.comment,
+    comment: [appliedPromo && `Промокод «${appliedPromo}» (−${discount} ₽)`, order.comment].filter(Boolean).join("\n") || null,
   }).catch(() => {});
 
   // Доставка через поддержку (Беларусь / другие страны / нет СДЭК и Почты) —

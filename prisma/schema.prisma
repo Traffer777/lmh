@@ -72,6 +72,8 @@ model Order {
   comment         String?
   paymentMethod   String // sbp, card, installment
   itemsTotal      Int
+  promoCode       String? // применённый промокод (lib/promo.ts)
+  discount        Int         @default(0) // скидка по промокоду, ₽ (уже учтена в itemsTotal)
   total           Int
   status          String      @default("new") // new, paid, shipped, done, canceled
   paymentId       String? // PaymentId Т-Кассы

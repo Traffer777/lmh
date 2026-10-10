@@ -93,6 +93,12 @@ export default async function AdminOrderDetail({
           <span>Товары</span>
           <span>{formatPrice(order.itemsTotal)}</span>
         </div>
+        {order.promoCode && (
+          <div className="mono flex w-64 justify-between text-accent">
+            <span>Промокод «{order.promoCode}»</span>
+            <span>−{formatPrice(order.discount)}</span>
+          </div>
+        )}
         <div className="mono flex w-64 justify-between text-fg-dim">
           <span>Доставка</span>
           <span>{order.deliveryCost === 0 ? "бесплатно" : formatPrice(order.deliveryCost)}</span>
