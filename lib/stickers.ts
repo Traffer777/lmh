@@ -34,6 +34,17 @@ export const STICKERS: Sticker[] = [
       { size: "1000 шт", qty: 1000, price: 10000 },
     ],
   },
+  {
+    slug: "sticker-rubli",
+    title: "Наклейки «Рубли»",
+    images: ["/stickers/rubli-1.jpg"],
+    packs: [
+      { size: "10 шт", qty: 10, price: 500 },
+      { size: "50 шт", qty: 50, price: 2000 },
+      { size: "100 шт", qty: 100, price: 3000 },
+      { size: "1000 шт", qty: 1000, price: 20000 },
+    ],
+  },
 ];
 
 export function getSticker(slug: string): Sticker | undefined {
