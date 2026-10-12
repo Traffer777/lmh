@@ -60,7 +60,7 @@ export default function StickerDetail({ id, slug, title, description, images, va
               aria-label={`Фото ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={im.url} alt={im.alt ?? ""} className="h-full w-full object-cover" />
+              <img src={im.url} alt={im.alt ?? ""} className="h-full w-full object-contain" />
             </button>
           ))}
         </div>
@@ -69,7 +69,7 @@ export default function StickerDetail({ id, slug, title, description, images, va
           <img
             src={imgs[active]?.url}
             alt={imgs[active]?.alt ?? title}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         </div>
       </div>
