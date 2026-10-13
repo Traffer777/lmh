@@ -119,6 +119,9 @@ export default function StickerDetail({ id, slug, title, description, images, va
                 >
                   <span className="block text-sm">{p.qty} шт.</span>
                   <span className="block text-[11px] opacity-80">{formatPrice(p.price)}</span>
+                  <span className="block text-[10px] opacity-60">
+                    {st > 0 ? `осталось ${st} пач.` : "нет"}
+                  </span>
                 </button>
               );
             })}

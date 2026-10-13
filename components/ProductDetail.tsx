@@ -318,6 +318,9 @@ export default function ProductDetail({
                   className={chipCls(letter === l, disabled)}
                 >
                   {l}
+                  <span className="block text-[10px] normal-case leading-tight opacity-70">
+                    {stockOf(color, fit, l) > 0 ? `${stockOf(color, fit, l)} шт.` : "нет"}
+                  </span>
                 </button>
               );
             })}
@@ -338,11 +341,14 @@ export default function ProductDetail({
                   }`}
                 >
                   {v.size}
+                  <span className="block text-[10px] normal-case leading-tight opacity-70">
+                    {v.stock > 0 ? `${v.stock} шт.` : "нет"}
+                  </span>
                 </button>
               );
             })}
           </div>
-          {selectedVariant && selectedVariant.stock > 0 && selectedVariant.stock <= 3 && (
+          {selectedVariant && selectedVariant.stock > 0 && (
             <p className="mono mt-2 text-xs text-accent">
               Осталось {selectedVariant.stock} шт.
             </p>
