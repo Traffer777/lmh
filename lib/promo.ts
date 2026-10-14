@@ -11,6 +11,8 @@ export type Promo = {
 export const PROMOS: Promo[] = [
   { code: "колялмх", percent: 10, minTotal: 5000 },
   { code: "алфлмх", percent: 10, minTotal: 5000 },
+  // За отзыв 5★ в ВК (объявление в components/AnnounceBar.tsx) — выдаётся вручную.
+  { code: "отзывлмх", percent: 5, minTotal: 0 },
 ];
 
 // Не одежда — скидка на них не действует.
