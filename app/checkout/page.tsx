@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/format";
+import { applyReviewDiscount, REVIEW_PERCENT, REVIEW_URL } from "@/lib/promo";
 import {
   DELIVERY_METHODS,
   PAYMENT_METHODS,
@@ -27,9 +28,11 @@ export default function CheckoutPage() {
   const [comment, setComment] = useState("");
   const [telegramId, setTelegramId] = useState("");
   const [promoInput, setPromoInput] = useState("");
-  const [promo, setPromo] = useState<{ code: string; percent: number; discount: number } | null>(null);
+  const [promo, setPromo] = useState<{ code: string; percent: number; allItems?: boolean; discount: number } | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [reviewShot, setReviewShot] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [instOpen, setInstOpen] = useState(false);
@@ -56,7 +59,27 @@ export default function CheckoutPage() {
   const [cdekError, setCdekError] = useState<string | null>(null);
 
   const totalQty = useCart((s) => s.items.reduce((n, i) => n + i.qty, 0));
-  const itemsTotal = cartTotal - (promo?.discount ?? 0);
+  // Скидка за скриншот отзыва ВК — на все товары, с промокодом не суммируется.
+  const reviewDiscount = reviewShot && !promo ? applyReviewDiscount(items).discount : 0;
+  const itemsTotal = cartTotal - (promo?.discount ?? 0) - reviewDiscount;
+
+  // Сжимаем скриншот в JPEG (≤1600px) прямо в браузере, чтобы заказ уходил быстро.
+  async function pickReviewShot(file: File | undefined) {
+    setReviewError(null);
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return setReviewError("Нужна картинка (скриншот).");
+    try {
+      const bmp = await createImageBitmap(file);
+      const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width * k);
+      c.height = Math.round(bmp.height * k);
+      c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
+      setReviewShot(c.toDataURL("image/jpeg", 0.85));
+    } catch {
+      setReviewError("Не удалось прочитать картинку. Попробуйте JPG или PNG.");
+    }
+  }
 
   // Промокод проверяет сервер (категории и цены — из БД); при изменении корзины пересчитываем.
   async function checkPromo(code: string) {
@@ -72,7 +95,7 @@ export default function CheckoutPage() {
         }),
       });
       const d = await res.json();
-      if (d.ok) setPromo({ code: d.code, percent: d.percent, discount: d.discount });
+      if (d.ok) setPromo({ code: d.code, percent: d.percent, allItems: d.allItems, discount: d.discount });
       else {
         setPromo(null);
         setPromoError(d.error ?? "Промокод не применён.");
@@ -246,6 +269,7 @@ export default function CheckoutPage() {
           comment,
           telegramId: telegramId.trim() || undefined,
           promoCode: promo?.code,
+          reviewShot: reviewShot ?? undefined,
         }),
       });
       const data = await res.json();
@@ -668,7 +692,7 @@ export default function CheckoutPage() {
               {promo ? (
                 <div className="mono flex items-center justify-between gap-2 border border-accent bg-accent/10 p-3 text-xs">
                   <span>
-                    «{promo.code}» — −{promo.percent}% на одежду
+                    «{promo.code}» — −{promo.percent}% {promo.allItems ? "на всё" : "на одежду"}
                   </span>
                   <button
                     type="button"
@@ -709,6 +733,47 @@ export default function CheckoutPage() {
               {promoError && <p className="mono mt-2 text-xs text-accent">{promoError}</p>}
             </div>
 
+            <div className="mt-5 border-t border-line pt-4">
+              <label className="lbl">⭐ Скидка {REVIEW_PERCENT}% за отзыв в ВК</label>
+              <p className="text-xs text-fg-2">
+                Оставьте отзыв 5★{" "}
+                <a href={REVIEW_URL} target="_blank" rel="noreferrer" className="text-accent underline">
+                  на странице магазина в ВК
+                </a>{" "}
+                и приложите скриншот — скидка {REVIEW_PERCENT}% на все товары применится сразу.
+              </p>
+              {reviewShot ? (
+                <div className="mt-3 flex items-center gap-3 border border-accent bg-accent/10 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={reviewShot} alt="Скриншот отзыва" className="h-16 w-16 border border-line object-contain" />
+                  <span className="mono flex-1 text-xs">
+                    {promo ? "Скидки не суммируются — действует промокод" : `Скриншот приложен · −${REVIEW_PERCENT}%`}
+                  </span>
+                  <button
+                    type="button"
+                    className="mono text-xs uppercase tracking-widest text-fg-dim hover:text-accent"
+                    onClick={() => setReviewShot(null)}
+                  >
+                    убрать
+                  </button>
+                </div>
+              ) : (
+                <label className="btn mt-3 w-full cursor-pointer border border-line text-center">
+                  📸 Приложить скриншот отзыва
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      void pickReviewShot(e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              )}
+              {reviewError && <p className="mono mt-2 text-xs text-accent">{reviewError}</p>}
+            </div>
+
             <div className="mono mt-4 flex justify-between text-sm text-fg-dim">
               <span>Товары</span>
               <span>{formatPrice(cartTotal)}</span>
@@ -717,6 +782,12 @@ export default function CheckoutPage() {
               <div className="mono mt-2 flex justify-between text-sm text-accent">
                 <span>Скидка по промокоду</span>
                 <span>−{formatPrice(promo.discount)}</span>
+              </div>
+            )}
+            {reviewDiscount > 0 && (
+              <div className="mono mt-2 flex justify-between text-sm text-accent">
+                <span>Скидка за отзыв ВК</span>
+                <span>−{formatPrice(reviewDiscount)}</span>
               </div>
             )}
             <div className="mono mt-2 flex justify-between text-sm text-fg-dim">

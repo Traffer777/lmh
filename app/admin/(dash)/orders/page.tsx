@@ -6,7 +6,7 @@ import { orderStatusLabel } from "@/lib/constants";
 export default async function AdminOrders() {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
-    include: { items: true },
+    include: { items: true, reviewShot: { select: { id: true } } },
   });
 
   return (
@@ -34,6 +34,9 @@ export default async function AdminOrders() {
                   <Link href={`/admin/orders/${o.id}`} className="mono hover:text-accent">
                     {o.number}
                   </Link>
+                  {o.reviewShot && (
+                    <span className="ml-2" title="Приложен скриншот отзыва ВК">📸</span>
+                  )}
                 </td>
                 <td className="mono p-3 text-fg-dim">{formatDate(o.createdAt)}</td>
                 <td className="p-3">

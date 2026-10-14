@@ -74,6 +74,8 @@ model Order {
   itemsTotal      Int
   promoCode       String? // применённый промокод (lib/promo.ts)
   discount        Int         @default(0) // скидка по промокоду, ₽ (уже учтена в itemsTotal)
+  reviewDiscount  Int         @default(0) // скидка за скриншот отзыва ВК, ₽ (уже учтена в itemsTotal)
+  reviewShot      ReviewShot?
   total           Int
   status          String      @default("new") // new, paid, shipped, done, canceled
   paymentId       String? // PaymentId Т-Кассы
@@ -136,5 +138,16 @@ model BotSubscriber {
 // ровно один раз даже при параллельных вебхуках оплаты (unique по milestone).
 model BotBroadcast {
   milestone Int      @id
+  createdAt DateTime @default(now())
+}
+
+// Скриншот отзыва ВК, приложенный покупателем при оформлении (хранится в БД —
+// файловая система контейнера сбрасывается при деплое).
+model ReviewShot {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @unique
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  mime      String
+  data      Bytes
   createdAt DateTime @default(now())
 }

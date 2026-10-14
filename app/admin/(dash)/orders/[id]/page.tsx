@@ -13,7 +13,7 @@ export default async function AdminOrderDetail({
   const { id } = await params;
   const order = await prisma.order.findUnique({
     where: { id: Number(id) },
-    include: { items: true },
+    include: { items: true, reviewShot: { select: { id: true } } },
   });
   if (!order) notFound();
 
@@ -63,6 +63,24 @@ export default async function AdminOrderDetail({
         </div>
       )}
 
+      {order.reviewShot && (
+        <div className="mt-6 border border-accent bg-bg-2 p-5">
+          <h2 className="mono mb-3 text-xs uppercase tracking-widest text-accent">
+            📸 Скриншот отзыва ВК
+            {order.reviewDiscount > 0 ? ` · скидка −${formatPrice(order.reviewDiscount)}` : " · скидка не применена (был промокод)"}
+          </h2>
+          <a href={`/api/admin/orders/${order.id}/review-shot`} target="_blank" rel="noreferrer">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/admin/orders/${order.id}/review-shot`}
+              alt="Скриншот отзыва"
+              className="max-h-[480px] w-auto border border-line object-contain"
+            />
+          </a>
+          <p className="mono mt-2 text-xs text-fg-dim">Нажмите, чтобы открыть в полном размере.</p>
+        </div>
+      )}
+
       <div className="mt-6 border border-line">
         <table className="w-full text-sm">
           <thead className="bg-bg-2 text-left">
@@ -97,6 +115,12 @@ export default async function AdminOrderDetail({
           <div className="mono flex w-64 justify-between text-accent">
             <span>Промокод «{order.promoCode}»</span>
             <span>−{formatPrice(order.discount)}</span>
+          </div>
+        )}
+        {order.reviewDiscount > 0 && (
+          <div className="mono flex w-64 justify-between text-accent">
+            <span>Отзыв ВК 📸</span>
+            <span>−{formatPrice(order.reviewDiscount)}</span>
           </div>
         )}
         <div className="mono flex w-64 justify-between text-fg-dim">

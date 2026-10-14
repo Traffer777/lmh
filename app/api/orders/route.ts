@@ -8,7 +8,7 @@ import { DELIVERY_METHODS, PAYMENT_METHODS, FREE_SHIPPING_THRESHOLD, isSupportDe
 import { notifyNewOrder } from "@/lib/telegram";
 import { calcToCity } from "@/lib/cdek";
 import { stickerPackPrice } from "@/lib/stickers";
-import { applyPromo } from "@/lib/promo";
+import { applyPromo, applyReviewDiscount, REVIEW_PERCENT } from "@/lib/promo";
 
 type IncomingItem = {
   productId: number;
@@ -32,7 +32,12 @@ type Body = {
   comment?: string;
   telegramId?: string;
   promoCode?: string;
+  // Скриншот отзыва ВК (data:image/...;base64) — даёт скидку REVIEW_PERCENT на все товары.
+  reviewShot?: string;
 };
+
+const SHOT_RE = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/;
+const SHOT_MAX = 6 * 1024 * 1024;
 
 function orderNumber(): string {
   return `LMH-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
@@ -46,7 +51,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Некорректный запрос." }, { status: 400 });
   }
 
-  const { items, customer, delivery, paymentMethod, comment, telegramId, promoCode } = body;
+  const { items, customer, delivery, paymentMethod, comment, telegramId, promoCode, reviewShot } = body;
+
+  let shot: { mime: string; data: Buffer } | null = null;
+  if (reviewShot) {
+    const m = SHOT_RE.exec(reviewShot);
+    const data = m ? Buffer.from(m[2], "base64") : null;
+    if (!m || !data?.length || data.length > SHOT_MAX)
+      return NextResponse.json({ ok: false, error: "Скриншот отзыва: нужна картинка JPG/PNG до 6 МБ." }, { status: 400 });
+    shot = { mime: m[1], data };
+  }
 
   // Валидация формы
   if (!items?.length) return NextResponse.json({ ok: false, error: "Корзина пуста." }, { status: 400 });
@@ -127,6 +141,15 @@ export async function POST(request: NextRequest) {
     appliedPromo = res.promo.code;
   }
 
+  // Скидка за скриншот отзыва — на все товары, с промокодом не суммируется.
+  let reviewDiscount = 0;
+  if (shot && !appliedPromo) {
+    const res = applyReviewDiscount(orderItems);
+    res.prices.forEach((p, idx) => (orderItems[idx].price = p));
+    reviewDiscount = res.discount;
+    itemsTotal -= reviewDiscount;
+  }
+
   // Стоимость доставки считаем на сервере (клиенту не доверяем).
   // Бесплатно от порога; для СДЭК — реальный тариф по API до ПВЗ; иначе базовый тариф.
   let deliveryCost: number;
@@ -173,9 +196,12 @@ export async function POST(request: NextRequest) {
       itemsTotal,
       promoCode: appliedPromo,
       discount,
+      reviewDiscount,
       total,
       status: "new",
       items: { create: orderItems },
+      // Скриншот сохраняем, даже если скидка не применилась (был промокод) — владелец увидит.
+      ...(shot ? { reviewShot: { create: { mime: shot.mime, data: new Uint8Array(shot.data) } } } : {}),
     },
   });
 
@@ -192,7 +218,11 @@ export async function POST(request: NextRequest) {
     deliveryMethod: order.deliveryMethod,
     deliveryAddress: order.deliveryAddress,
     paymentMethod: order.paymentMethod,
-    comment: [appliedPromo && `Промокод «${appliedPromo}» (−${discount} ₽)`, order.comment].filter(Boolean).join("\n") || null,
+    comment: [
+      appliedPromo && `Промокод «${appliedPromo}» (−${discount} ₽)`,
+      shot && (reviewDiscount ? `📸 Скриншот отзыва ВК: −${REVIEW_PERCENT}% (−${reviewDiscount} ₽)` : "📸 Приложен скриншот отзыва ВК"),
+      order.comment,
+    ].filter(Boolean).join("\n") || null,
   }).catch(() => {});
 
   // Доставка через поддержку (Беларусь / другие страны / нет СДЭК и Почты) —

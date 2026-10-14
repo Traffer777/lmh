@@ -26,5 +26,5 @@ export async function POST(request: NextRequest) {
   });
   const res = applyPromo(body.code, lines);
   if (!res.ok) return NextResponse.json(res);
-  return NextResponse.json({ ok: true, code: res.promo.code, percent: res.promo.percent, discount: res.discount });
+  return NextResponse.json({ ok: true, code: res.promo.code, percent: res.promo.percent, allItems: !!res.promo.allItems, discount: res.discount });
 }

@@ -6,13 +6,14 @@ export type Promo = {
   code: string;
   percent: number;
   minTotal: number; // минимальная сумма товаров в корзине (до скидки), ₽
+  allItems?: boolean; // скидка на все товары (а не только на одежду)
 };
 
 export const PROMOS: Promo[] = [
   { code: "колялмх", percent: 10, minTotal: 5000 },
   { code: "алфлмх", percent: 10, minTotal: 5000 },
-  // За отзыв 5★ в ВК (объявление в components/AnnounceBar.tsx) — выдаётся вручную.
-  { code: "отзывлмх", percent: 5, minTotal: 0 },
+  // За отзыв 5★ в ВК — выдаётся вручную; автоматически то же даёт скриншот отзыва (REVIEW_PERCENT).
+  { code: "отзывлмх", percent: 5, minTotal: 0, allItems: true },
 ];
 
 // Не одежда — скидка на них не действует.
@@ -39,14 +40,30 @@ export function applyPromo(
   const total = lines.reduce((s, l) => s + l.price * l.qty, 0);
   if (total < promo.minTotal)
     return { ok: false, error: `Промокод действует для заказов от ${promo.minTotal.toLocaleString("ru-RU")} ₽.` };
-  if (!lines.some((l) => isClothing(l.category)))
-    return { ok: false, error: "Промокод действует только на одежду." };
+  const eligible = (l: Line) => promo.allItems || isClothing(l.category);
+  if (!lines.some(eligible)) return { ok: false, error: "Промокод действует только на одежду." };
   let discount = 0;
   const prices = lines.map((l) => {
-    if (!isClothing(l.category)) return l.price;
+    if (!eligible(l)) return l.price;
     const p = Math.round((l.price * (100 - promo.percent)) / 100);
     discount += (l.price - p) * l.qty;
     return p;
   });
   return { ok: true, promo, prices, discount };
+}
+
+// Скидка за скриншот отзыва 5★ в ВК, приложенный при оформлении (на все товары).
+// С промокодами не суммируется.
+export const REVIEW_PERCENT = 5;
+export const REVIEW_URL = "https://vk.ru/reviews-214420576";
+
+/** Цены за единицу после скидки за отзыв и сумма скидки. */
+export function applyReviewDiscount(lines: { price: number; qty: number }[]) {
+  let discount = 0;
+  const prices = lines.map((l) => {
+    const p = Math.round((l.price * (100 - REVIEW_PERCENT)) / 100);
+    discount += (l.price - p) * l.qty;
+    return p;
+  });
+  return { prices, discount };
 }
