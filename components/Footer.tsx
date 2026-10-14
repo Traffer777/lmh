@@ -40,7 +40,7 @@ export default function Footer() {
           <ul className="space-y-2 text-sm">
             <li><a href={COMPANY.phoneHref} className="hover:text-accent">{COMPANY.phone}</a></li>
             <li><a href={`mailto:${COMPANY.email}`} className="hover:text-accent">{COMPANY.email}</a></li>
-            <li><a href={COMPANY.socials.telegram} className="hover:text-accent" target="_blank" rel="noreferrer">Telegram @LmhFuckSleep</a></li>
+            <li><a href={COMPANY.socials.telegram2} className="hover:text-accent" target="_blank" rel="noreferrer">Telegram @LMH_worldwide</a></li>
             <li><a href={COMPANY.socials.instagram} className="hover:text-accent" target="_blank" rel="noreferrer">Instagram</a></li>
           </ul>
         </div>

@@ -26,7 +26,7 @@ export default async function FailPage({
         <Link href="/cart" className="btn btn-accent">
           Вернуться в корзину
         </Link>
-        <a href="https://t.me/LmhFuckSleep" className="btn" target="_blank" rel="noreferrer">
+        <a href="https://t.me/LMH_worldwide" className="btn" target="_blank" rel="noreferrer">
           Написать в Telegram
         </a>
       </div>

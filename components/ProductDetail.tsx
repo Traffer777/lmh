@@ -428,7 +428,7 @@ export default function ProductDetail({
             <>
               <span className="btn cursor-not-allowed opacity-60">Скоро в продаже</span>
               <a
-                href="https://t.me/LmhFuckSleep"
+                href="https://t.me/LMH_worldwide"
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-accent"

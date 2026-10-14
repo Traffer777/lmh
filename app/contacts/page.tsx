@@ -7,8 +7,8 @@ export const metadata = { title: "Контакты — LMH" };
 const CONTACTS = [
   { label: "Телефон", value: COMPANY.phone, href: COMPANY.phoneHref },
   { label: "E-mail", value: COMPANY.email, href: `mailto:${COMPANY.email}` },
-  { label: "Telegram", value: "@LmhFuckSleep", href: COMPANY.socials.telegram },
   { label: "Telegram (связь)", value: "@LMH_worldwide", href: COMPANY.socials.telegram2 },
+  { label: "Telegram-канал", value: "@LmhFuckSleep", href: COMPANY.socials.telegram },
   { label: "Instagram", value: "@lmh_clothing", href: COMPANY.socials.instagram },
   { label: "ВКонтакте", value: "vk.ru/lmh_clothing", href: COMPANY.socials.vk },
 ];
