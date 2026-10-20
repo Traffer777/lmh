@@ -131,3 +131,30 @@ export function inStock(variants: { stock: number }[]): boolean {
 }
 
 export type ProductWithRelations = Awaited<ReturnType<typeof getPublishedProducts>>[number];
+
+// «С этим товаром покупают»: сначала то, что реально брали в одних заказах,
+// затем товары из других разделов (к худи — штаны, шапки и т.п.) и из того же дропа.
+export async function getAlsoBought(productId: number, limit = 12) {
+  const { groupOf } = await import("@/lib/groups");
+  const [all, rows] = await Promise.all([
+    getPublishedProducts(),
+    prisma.orderItem.findMany({
+      where: { productId: { not: productId }, order: { items: { some: { productId } } } },
+      select: { productId: true, qty: true },
+    }),
+  ]);
+  const self = all.find((p) => p.id === productId);
+  const together = new Map<number, number>();
+  for (const r of rows) if (r.productId) together.set(r.productId, (together.get(r.productId) ?? 0) + r.qty);
+  const selfGroup = self && groupOf(self);
+  const score = (p: ProductWithRelations) =>
+    (together.get(p.id) ?? 0) * 100 +
+    (selfGroup && groupOf(p) !== selfGroup ? 10 : 0) +
+    (self?.dropId && p.dropId === self.dropId ? 5 : 0);
+  return all
+    .filter((p) => p.id !== productId && p.category !== "sticker" && inStock(p.variants))
+    .map((p, i) => ({ p, s: score(p), i }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .slice(0, limit)
+    .map((x) => x.p);
+}

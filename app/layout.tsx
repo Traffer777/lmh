@@ -5,7 +5,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Ticker from "@/components/Ticker";
 import RegisterPrompt from "@/components/RegisterPrompt";
-import ContestBanner from "@/components/ContestBanner";
 import AnnounceBar from "@/components/AnnounceBar";
 
 const display = Oswald({
@@ -43,7 +42,6 @@ export default function RootLayout({
         <div className="grain" aria-hidden />
         <div className="relative z-10 flex min-h-screen flex-col">
           <AnnounceBar />
-          <ContestBanner />
           <Header />
           <Ticker />
           <main className="flex-1">{children}</main>

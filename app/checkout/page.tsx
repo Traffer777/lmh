@@ -645,24 +645,6 @@ export default function CheckoutPage() {
                 placeholder="Мы растём благодаря вам. Здесь вы можете оставить пожелания по развитию бренда или помощи в его участии."
               />
             </div>
-            <div className="mt-4 border border-line bg-bg-2/60 p-4">
-              <label className="lbl">
-                🏁 Telegram для конкурса LMH × ГЛЕБАС
-                <span className="ml-2 text-xs text-fg-2">(необязательно)</span>
-              </label>
-              <input
-                className="field"
-                type="text"
-                value={telegramId}
-                onChange={(e) => setTelegramId(e.target.value)}
-                placeholder="@nickname или числовой ID"
-              />
-              <p className="mt-2 text-xs text-fg-2">
-                Укажи свой Telegram — начислим билеты на розыгрыш{" "}
-                <span className="text-fg">стразовой Приоры</span>. Билеты начисляются только за
-                товары коллекции LMH × ГЛЕБАС в заказе.
-              </p>
-            </div>
           </section>
         </div>
 

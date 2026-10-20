@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductDetail from "@/components/ProductDetail";
 import StickerDetail from "@/components/StickerDetail";
-import { getProductBySlug } from "@/lib/queries";
+import ProductCard from "@/components/ProductCard";
+import AlsoBought from "@/components/AlsoBought";
+import { getProductBySlug, getAlsoBought } from "@/lib/queries";
 import { limitedUntil } from "@/lib/limited";
 
 // Товары с возможностью нанесения имени/номера на спину.
@@ -33,6 +35,17 @@ export default async function ProductPage({
   const draftHidden = product && !product.published && process.env.NODE_ENV === "production";
   if (!product || draftHidden) notFound();
 
+  const also = await getAlsoBought(product.id);
+  const alsoBought = also.length > 0 && (
+    <AlsoBought>
+      {also.map((p) => (
+        <div key={p.id} className="w-[44%] shrink-0 snap-start sm:w-[30%] lg:w-[22%]">
+          <ProductCard product={p} />
+        </div>
+      ))}
+    </AlsoBought>
+  );
+
   // Стикеры — своя карточка с выбором пачки (цена зависит от количества).
   if (product.category === "sticker") {
     return (
@@ -45,6 +58,7 @@ export default async function ProductPage({
           images={product.images.map((im) => ({ url: im.url, alt: im.alt }))}
           variants={product.variants.map((v) => ({ size: v.size, stock: v.stock }))}
         />
+        {alsoBought}
       </div>
     );
   }
@@ -69,6 +83,7 @@ export default async function ProductPage({
         }}
         limitedUntil={limitedUntil(product.slug)}
       />
+      {alsoBought}
     </div>
   );
 }

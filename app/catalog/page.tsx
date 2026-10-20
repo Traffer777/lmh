@@ -2,24 +2,26 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import PeelSticker from "@/components/PeelSticker";
 import { getPublishedProducts, getDrops } from "@/lib/queries";
-import { CATEGORIES, categoryLabel } from "@/lib/constants";
+import { categoryLabel } from "@/lib/constants";
+import { GROUPS, findGroup } from "@/lib/groups";
 
 export const metadata = { title: "Каталог — LMH" };
 
 export default async function CatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ drop?: string; cat?: string }>;
+  searchParams: Promise<{ drop?: string; cat?: string; g?: string }>;
 }) {
-  const { drop, cat } = await searchParams;
+  const { drop, cat, g } = await searchParams;
+  const group = findGroup(g);
   const [all, drops] = await Promise.all([getPublishedProducts(), getDrops()]);
 
   let products = all;
   if (drop) products = products.filter((p) => p.drop?.slug === drop);
   if (cat) products = products.filter((p) => p.category === cat);
+  if (group) products = products.filter((p) => group.match(p));
 
   const activeDrop = drops.find((d) => d.slug === drop);
-  const usedCats = CATEGORIES.filter((c) => all.some((p) => p.category === c.value));
 
   const chip = (active: boolean) =>
     `mono border px-3 py-1.5 text-xs uppercase tracking-widest transition-colors ${
@@ -44,16 +46,16 @@ export default async function CatalogPage({
 
       {/* Фильтр: категории */}
       <div className="mt-8 flex flex-wrap gap-2">
-        <Link href="/catalog" className={chip(!cat)}>
+        <Link href="/catalog" className={chip(!cat && !group)}>
           Все
         </Link>
-        {usedCats.map((c) => (
+        {GROUPS.map((gr) => (
           <Link
-            key={c.value}
-            href={cat === c.value ? "/catalog" : `/catalog?cat=${c.value}`}
-            className={chip(cat === c.value)}
+            key={gr.key}
+            href={group?.key === gr.key ? "/catalog" : `/catalog?g=${gr.key}`}
+            className={chip(group?.key === gr.key)}
           >
-            {c.label}
+            {gr.label}
           </Link>
         ))}
       </div>
@@ -61,6 +63,7 @@ export default async function CatalogPage({
       <p className="mono mt-6 text-xs uppercase tracking-widest text-fg-dim">
         {products.length} {plural(products.length)}
         {cat ? ` · ${categoryLabel(cat)}` : ""}
+        {group ? ` · ${group.label}` : ""}
       </p>
 
       {products.length === 0 ? (

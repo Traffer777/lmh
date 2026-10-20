@@ -2,6 +2,7 @@ import Link from "next/link";
 import HeroVideo from "@/components/HeroVideo";
 import ProductCard from "@/components/ProductCard";
 import PeelSticker from "@/components/PeelSticker";
+import GroupIcons from "@/components/GroupIcons";
 import { getFeaturedProducts } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,9 @@ export default async function Home() {
 
       {/* СЕТКА ТОВАРОВ */}
       <section className="mx-auto max-w-7xl px-4 py-14 md:px-6">
+        <div className="mb-14">
+          <GroupIcons />
+        </div>
         <div className="mb-8 flex items-end justify-between">
           <h2 className="display text-4xl md:text-5xl">Новое</h2>
           <Link href="/catalog" className="mono text-xs uppercase tracking-widest hover:text-accent">
