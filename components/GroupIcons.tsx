@@ -9,9 +9,10 @@ const ICONS: Record<GroupKey, React.ReactNode> = {
   lower: <path d="M7 3h10l1 18h-4.5L12 10l-1.5 11H6L7 3Zm0 3h10" />,
   accessories: (
     <>
-      <path d="M4 16c0-5 3.6-9 8-9s8 4 8 9" />
-      <path d="M3 16h18v2.5H3z" />
-      <circle cx="12" cy="5.5" r="1.5" />
+      <path d="M5.5 15v-3a6.5 6.5 0 0 1 13 0v3" />
+      <rect x="4" y="15" width="16" height="4.5" rx="1" />
+      <path d="M8 15v4.5M12 15v4.5M16 15v4.5" />
+      <circle cx="12" cy="4" r="1.5" />
     </>
   ),
   bags: (
