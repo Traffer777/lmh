@@ -8,7 +8,7 @@ import { DELIVERY_METHODS, PAYMENT_METHODS, FREE_SHIPPING_THRESHOLD, isSupportDe
 import { notifyNewOrder } from "@/lib/telegram";
 import { calcToCity } from "@/lib/cdek";
 import { stickerPackPrice } from "@/lib/stickers";
-import { applyPromo, applyReviewDiscount, REVIEW_PERCENT } from "@/lib/promo";
+import { applyPromo, applyReviewDiscount, REVIEW_PERCENT, REVIEW_ENABLED } from "@/lib/promo";
 
 type IncomingItem = {
   productId: number;
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   const { items, customer, delivery, paymentMethod, comment, telegramId, promoCode, reviewShot } = body;
 
   let shot: { mime: string; data: Buffer } | null = null;
-  if (reviewShot) {
+  if (reviewShot && REVIEW_ENABLED) {
     const m = SHOT_RE.exec(reviewShot);
     const data = m ? Buffer.from(m[2], "base64") : null;
     if (!m || !data?.length || data.length > SHOT_MAX)
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
 
   // Скидка за скриншот отзыва — на все товары, с промокодом не суммируется.
   let reviewDiscount = 0;
-  if (shot && !appliedPromo) {
+  if (shot && !appliedPromo && REVIEW_ENABLED) {
     const res = applyReviewDiscount(orderItems);
     res.prices.forEach((p, idx) => (orderItems[idx].price = p));
     reviewDiscount = res.discount;

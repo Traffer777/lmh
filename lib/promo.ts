@@ -12,8 +12,6 @@ export type Promo = {
 export const PROMOS: Promo[] = [
   { code: "колялмх", percent: 10, minTotal: 5000 },
   { code: "алфлмх", percent: 10, minTotal: 5000 },
-  // За отзыв 5★ в ВК — выдаётся вручную; автоматически то же даёт скриншот отзыва (REVIEW_PERCENT).
-  { code: "отзывлмх", percent: 5, minTotal: 0, allItems: true },
 ];
 
 // Не одежда — скидка на них не действует.
@@ -54,6 +52,7 @@ export function applyPromo(
 
 // Скидка за скриншот отзыва 5★ в ВК, приложенный при оформлении (на все товары).
 // С промокодами не суммируется.
+export const REVIEW_ENABLED = false; // акция за отзыв выключена 2026-10-20
 export const REVIEW_PERCENT = 5;
 export const REVIEW_URL = "https://vk.ru/reviews-214420576";
 

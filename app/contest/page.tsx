@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import ContestProgress from "@/components/ContestProgress";
 
 export const metadata: Metadata = {
   title: "LMH × ГЛЕБАС — розыгрыш стразовой Приоры",
@@ -25,7 +24,6 @@ export default function ContestRulesPage() {
       </h1>
       <p className="display mt-2 text-3xl md:text-5xl">Стразовая Приора</p>
 
-      <ContestProgress />
 
       <p className="mono mt-6 border border-accent/40 bg-accent/10 p-4 text-sm">
         ⚠️ В розыгрыше участвуют <span className="text-accent">только покупки одежды из коллекции LMH × ГЛЕБАС</span>.
