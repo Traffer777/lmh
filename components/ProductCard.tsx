@@ -75,10 +75,10 @@ export default function ProductCard({ product }: { product: ProductWithRelations
         )}
       </div>
       <div className="mt-3 flex items-start justify-between gap-3">
-        <h3 className="display text-lg leading-tight group-hover:text-accent">
+        <h3 className="display min-w-0 break-words text-lg leading-tight group-hover:text-accent">
           {product.title}
         </h3>
-        <span className="mono whitespace-nowrap text-sm">
+        <span className="mono shrink-0 whitespace-nowrap text-sm">
           {product.price > 0 ? formatPrice(product.price) : "Цена уточняется"}
         </span>
       </div>
