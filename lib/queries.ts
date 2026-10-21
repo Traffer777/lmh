@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/prisma";
 
-// AW25-фото отдаём через jsDelivr (GitHub CDN) — Timeweb Docker кэширует public/ и файлы дропа
-// физически не попадают в контейнер. Файлы лежат в git → CDN отдаёт их напрямую.
-const CDN_BASE = "https://cdn.jsdelivr.net/gh/Traffer777/lmh@main/public";
+// Раньше AW25-фото шли через jsDelivr, но он сидит на Cloudflare, который российские провайдеры
+// режут — без VPN картинки не грузились. Теперь все файлы в контейнере, отдаём со своего сервера.
+const CDN_BASE = "";
 
 function productUrl(filename: string): string {
   if (filename.startsWith("aw25-") || filename.startsWith("glebas-") || filename.startsWith("bomber-"))
