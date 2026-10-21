@@ -35,14 +35,17 @@ export function deliveryLabel(value: string): string {
   return DELIVERY_METHODS.find((d) => d.value === value)?.label ?? value;
 }
 
-export const PAYMENT_METHODS = [
+const ALL_PAYMENT_METHODS = [
   { value: "sbp", label: "СБП (по QR / телефону)" },
   { value: "card", label: "Карта Мир / банковская карта" },
   { value: "installment", label: "Разделить платеж на 4 части" },
 ] as const;
 
+// «Долями» скрыто, пока Т-Банк не выдал ключи терминала (без них Init падает).
+export const PAYMENT_METHODS = ALL_PAYMENT_METHODS.filter((p) => p.value !== "installment");
+
 export function paymentLabel(value: string): string {
-  return PAYMENT_METHODS.find((p) => p.value === value)?.label ?? value;
+  return ALL_PAYMENT_METHODS.find((p) => p.value === value)?.label ?? value;
 }
 
 export const ORDER_STATUSES = [

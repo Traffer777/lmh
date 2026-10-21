@@ -558,7 +558,7 @@ export default function CheckoutPage() {
             <h2 className="display mb-4 text-2xl">3. Оплата</h2>
             <div className="space-y-3">
               {PAYMENT_METHODS.map((p) => {
-                const isInst = p.value === "installment";
+                const isInst = (p.value as string) === "installment";
                 return (
                   <div
                     key={p.value}
