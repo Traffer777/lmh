@@ -61,7 +61,7 @@ export function buildReturnLetter(r: ReturnLetterInput): { subject: string; body
         ? "В товаре обнаружен недостаток. Прошу вернуть уплаченные за него денежные средства / заменить товар (ст. 18 Закона РФ «О защите прав потребителей»)."
         : "Прошу принять возврат товара надлежащего качества и вернуть уплаченные за него денежные средства (ст. 26.1 Закона РФ «О защите прав потребителей»).";
   const body = [
-    `${COMPANY.status} ${COMPANY.legalName}`,
+    `Кому: ${COMPANY.status} ${COMPANY.legalName}`,
     `ИНН ${COMPANY.inn}, ОГРНИП ${COMPANY.ogrnip}`,
     `от: ${r.customerName}, тел. ${r.phone}, e-mail ${r.email}`,
     "",

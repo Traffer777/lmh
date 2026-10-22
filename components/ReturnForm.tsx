@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RETURN_KINDS, RETURNS_EMAIL, mailtoHref } from "@/lib/returns";
 import { formatPrice } from "@/lib/format";
 
@@ -21,6 +21,12 @@ export default function ReturnForm() {
   const [error, setError] = useState("");
   const [letter, setLetter] = useState<Letter | null>(null);
   const [copied, setCopied] = useState(false);
+  const doneRef = useRef<HTMLDivElement>(null);
+
+  // после отправки — прокрутить к блоку «последний шаг», а не в начало страницы
+  useEffect(() => {
+    if (letter) doneRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [letter]);
 
   async function lookup(e: React.FormEvent) {
     e.preventDefault();
@@ -62,7 +68,6 @@ export default function ReturnForm() {
     setBusy(false);
     if (!json.ok) return setError(json.error);
     setLetter({ number: json.number, subject: json.subject, body: json.body });
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function copy() {
@@ -86,7 +91,7 @@ export default function ReturnForm() {
 
   if (letter) {
     return (
-      <div className="border border-accent bg-bg-2 p-6">
+      <div ref={doneRef} className="scroll-mt-24 border border-accent bg-bg-2 p-6">
         <div className="mono text-xs uppercase tracking-[0.3em] text-accent">Заявка {letter.number} зарегистрирована</div>
         <h3 className="display mt-2 text-3xl">Остался последний шаг</h3>
         <p className="mt-3 text-sm text-fg-dim">
