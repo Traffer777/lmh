@@ -76,6 +76,7 @@ model Order {
   discount        Int         @default(0) // скидка по промокоду, ₽ (уже учтена в itemsTotal)
   reviewDiscount  Int         @default(0) // скидка за скриншот отзыва ВК, ₽ (уже учтена в itemsTotal)
   reviewShot      ReviewShot?
+  returns         ReturnRequest[]
   total           Int
   status          String      @default("new") // new, paid, shipped, done, canceled
   paymentId       String? // PaymentId Т-Кассы
@@ -150,4 +151,24 @@ model ReviewShot {
   mime      String
   data      Bytes
   createdAt DateTime @default(now())
+}
+
+// Заявление на возврат/обмен (страница /returns). Возвраты принимаются только
+// письменным заявлением на почту — запись здесь фиксирует его и даёт номер.
+model ReturnRequest {
+  id           Int      @id @default(autoincrement())
+  number       String   @unique // В-0001
+  orderId      Int
+  order        Order    @relation(fields: [orderId], references: [id])
+  kind         String // refund, exchange, defect
+  customerName String
+  phone        String
+  email        String
+  items        String // выбранные позиции текстом: «Худи · L × 1 — 5990 ₽»
+  amount       Int // сумма выбранных позиций, ₽
+  reason       String
+  status       String   @default("new") // new, review, approved, rejected, done
+  adminNote    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

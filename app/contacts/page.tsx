@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Socials from "@/components/Socials";
 import PeelSticker from "@/components/PeelSticker";
 import { COMPANY } from "@/lib/company";
@@ -28,8 +29,15 @@ export default function ContactsPage() {
       <p className="mono text-xs uppercase tracking-[0.3em] text-accent">Контакты</p>
       <h1 className="display mt-3 text-5xl md:text-6xl">Связаться с LMH</h1>
       <p className="mt-4 text-fg-dim">
-        Пишите по любым вопросам — заказ, размеры, доставка, сотрудничество.
-        Быстрее всего отвечаем в Telegram.
+        Пишите по любым вопросам — размеры, наличие, доставка, сотрудничество.
+        Быстрее всего отвечаем в Telegram. Заказы оформляются только на сайте.
+      </p>
+      <p className="mt-3 border border-accent bg-accent/10 p-4 text-sm">
+        Возврат, обмен или брак — только письменным заявлением на почту через{" "}
+        <Link href="/returns" className="text-accent underline">
+          форму возврата
+        </Link>
+        . В Telegram и ВК заявки на возврат не принимаем.
       </p>
 
       <Socials className="mt-8" />

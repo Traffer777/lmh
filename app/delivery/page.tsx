@@ -1,3 +1,4 @@
+import Link from "next/link";
 import PeelSticker from "@/components/PeelSticker";
 import { DELIVERY_METHODS, PAYMENT_METHODS, isSupportDelivery } from "@/lib/constants";
 import { COMPANY } from "@/lib/company";
@@ -82,8 +83,12 @@ export default function DeliveryPage() {
       <h2 className="display mt-12 text-2xl">Возврат</h2>
       <p className="mt-4 text-sm text-fg-dim">
         Вернуть товар надлежащего качества можно в течение 14 дней с момента
-        получения, если сохранены товарный вид, бирки и упаковка. По вопросам
-        возврата пишите в Telegram или на почту — поможем.
+        получения, если сохранены товарный вид, бирки и упаковка. Возврат и обмен
+        оформляются только письменным заявлением на почту —{" "}
+        <Link href="/returns" className="text-accent underline">
+          заполните форму возврата
+        </Link>
+        .
       </p>
     </div>
   );

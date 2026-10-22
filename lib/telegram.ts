@@ -117,3 +117,33 @@ export async function notifyTrackNumber(orderNumber: string, track: string): Pro
   ].join("\n");
   await sendTelegram(text);
 }
+
+// Уведомление владельцу о новом заявлении на возврат/обмен (/returns).
+export async function notifyReturnRequest(r: {
+  number: string;
+  orderNumber: string;
+  kindLabel: string;
+  customerName: string;
+  phone: string;
+  email: string;
+  items: string;
+  amount: number;
+  reason: string;
+}): Promise<void> {
+  const text = [
+    `↩️ <b>Заявка ${escapeHtml(r.number)}: ${escapeHtml(r.kindLabel)}</b>`,
+    `Заказ ${escapeHtml(r.orderNumber)}`,
+    "",
+    escapeHtml(r.items),
+    `Сумма: ${r.amount}₽`,
+    "",
+    `Причина: ${escapeHtml(r.reason)}`,
+    "",
+    `Клиент: ${escapeHtml(r.customerName)}`,
+    `Телефон: ${escapeHtml(r.phone)}`,
+    `Email: ${escapeHtml(r.email)}`,
+    "",
+    "Письмо с заявлением и фото должно прийти на почту.",
+  ].join("\n");
+  await sendTelegram(text);
+}

@@ -23,6 +23,7 @@ export default function Footer() {
             <li><Link href="/stickers" className="hover:text-accent">Стикеры</Link></li>
             <li><Link href="/media" className="hover:text-accent">Медиа</Link></li>
             <li><Link href="/delivery" className="hover:text-accent">Доставка и оплата</Link></li>
+            <li><Link href="/returns" className="hover:text-accent">Возврат и обмен</Link></li>
             <li><Link href="/contacts" className="hover:text-accent">Контакты</Link></li>
           </ul>
         </div>

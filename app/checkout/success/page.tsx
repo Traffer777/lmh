@@ -103,6 +103,13 @@ export default async function SuccessPage({
           Наш Telegram
         </a>
       </div>
+      <p className="mono mt-8 text-xs text-fg-dim">
+        Возврат или обмен — через{" "}
+        <Link href="/returns" className="underline hover:text-accent">
+          форму заявления
+        </Link>{" "}
+        на сайте.
+      </p>
     </div>
   );
 }
